@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "EventKart",
+    "slug": "event-kart",
+    "scheme": "eventkart",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#FAFAF8"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "shop.eventkart.app"
+    },
+    "android": {
+      "package": "shop.eventkart.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        { "photosPermission": "Allow EventKart to access your photos for portfolio uploads." }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
