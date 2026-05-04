@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { Alert, Image, Pressable, Text, View } from 'react-native';
+import { Alert, Platform, Text, TextInput, TouchableOpacity, View, StyleSheet, KeyboardAvoidingView, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import PhoneInput from "react-native-phone-number-input";
 
-import { Screen } from '@/components/ui/Screen';
-import { Button } from '@/components/ui/Button';
-import { Divider } from '@/components/ui/Divider';
-import { PhoneInput } from '@/components/auth/PhoneInput';
 import { requestPhoneOtp } from '@/lib/api/auth';
 import { SERVICE_URLS } from '@/lib/api/base';
 import { useAuthStore } from '@/store/authStore';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 function describeError(e: any): string {
   if (e?.response) {
@@ -32,11 +32,24 @@ export default function SignInScreen() {
   const setPendingPhone = useAuthStore((s) => s.setPendingPhone);
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  const [countryCode, setCountryCode] = useState<CountryCode>('US');
+  const [country, setCountry] = useState<Country>();
+  const [visible, setVisible] = useState(false);
 
   const formattedNumber = phone.replace(/\D/g, '');
+  const onSelect = (country: Country) => {
+    setCountryCode(country.cca2);
+    setCountry(country);
+    setVisible(false);
+  };
+
 
   const handleSendOtp = async () => {
     if (formattedNumber.length < 7) {
+      if (Platform.OS === 'web') {
+        window.alert('Please enter a valid phone number.');
+        return;
+      }
       Alert.alert('Invalid number', 'Please enter a valid phone number.');
       return;
     }
@@ -50,67 +63,316 @@ export default function SignInScreen() {
         params: { devOtp: res.devOtp ?? '' },
       });
     } catch (e: any) {
-      Alert.alert('Could not send OTP', describeError(e));
+      const msg = describeError(e);
+      if (Platform.OS === 'web') {
+        window.alert(`Could not send OTP — ${msg}`);
+      } else {
+        Alert.alert('Could not send OTP', msg);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogle = () => {
-    Alert.alert('Coming soon', 'Google sign-in will be enabled in the next build.');
-  };
-
   return (
-    <Screen scroll padded={false}>
-      <View className="flex-1 px-6 pt-10 pb-6">
-        <View className="h-2 w-12 rounded-full bg-tertiary-container mb-6" />
-        <Text className="font-serif-bold text-h1 text-surface-on">Welcome to EventKart</Text>
-        <Text className="font-sans text-body-md text-surface-on-variant mt-2">
-          Plan unforgettable events or grow your services. Sign in with your phone to begin.
-        </Text>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" />
 
-        <View className="mt-10 gap-2">
-          <Text className="font-sans-md text-label-md uppercase tracking-wider text-surface-on-variant">
-            Mobile Number
-          </Text>
-          <PhoneInput value={phone} onChangeText={setPhone} />
+        <View style={styles.borderView}>
+            {/* TopAppBar */}
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>EventKart</Text>
+              <View style={styles.placeholder} />
+            </View>
+
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={styles.flexGrow}
+            >
+              <ScrollView contentContainerStyle={styles.scrollContent}>
+                {/* Header Section */}
+                <View style={styles.heroSection}>
+                  <Text style={styles.title}>Welcome</Text>
+                  <Text style={styles.subtitle}>
+                    Enter your phone number to continue or create a new account.
+                  </Text>
+                </View>
+
+                {/* Form Section */}
+                <View style={styles.form}>
+                  <Text style={styles.label}>PHONE NUMBER</Text>
+                  <View style={styles.inputContainer}>
+                    {/* Country Code (Simplified Selector) */}
+                    <View style={styles.countrySelector} onPress={() => setVisible(true)}>
+                      <Text style={styles.inputText}>{country?.callingCode[0] ? `+${country.callingCode[0]}` : '+91'}</Text>
+                      {/*<MaterialIcons name="arrow-drop-down" size={20} color="#c6c6cd" />*/}
+                    </View>
+
+                    {/* Phone Input */}
+                    <TextInput
+                      style={styles.phoneInput}
+                      placeholder="(555) 000-0000"
+                      placeholderTextColor="#c6c6cd"
+                      keyboardType="phone-pad"
+                      value={phone}
+                      onChangeText={setPhone}
+                    />
+                  </View>
+                </View>
+
+                {/* Bottom Action Section */}
+
+                <View style={styles.footer}>
+                  <TouchableOpacity
+                    onPress={handleSendOtp}
+                    disabled={loading || formattedNumber.length < 7}
+                    activeOpacity={0.88}
+                    style={[styles.submitButton, (loading || formattedNumber.length < 7) && styles.disabledButton]}>
+                    <Text className="font-sans-sb text-button text-white uppercase tracking-wide">
+                      {loading ? 'Sending…' : 'Send Verification Code'}
+                    </Text>
+                    {!loading && <ArrowRight size={18} color="#ffffff" />}
+                  </TouchableOpacity>
+                  {/*<TouchableOpacity style={styles.submitButton}>
+                    <Text style={styles.submitButtonText}>Send Verification Code</Text>
+                    <MaterialIcons name="send" size={30} color="white" />
+                  </TouchableOpacity>*/}
+                </View>
+              </ScrollView>
+            </KeyboardAvoidingView>
         </View>
+          </SafeAreaView>
+        );
+      };
 
-        <View className="mt-6">
-          <Button
-            label="Send Verification Code"
-            onPress={handleSendOtp}
-            loading={loading}
-            iconRight={<ArrowRight size={16} color="#ffffff" />}
-          />
-        </View>
-
-        <Divider label="OR CONTINUE WITH" className="my-8" />
-
-        <Pressable
-          onPress={handleGoogle}
-          className="flex-row items-center justify-center gap-3 h-12 rounded-lg border border-outline-variant bg-surface-container-lowest active:bg-surface-container-low"
-        >
-          <Image
-            source={{ uri: 'https://www.google.com/favicon.ico' }}
-            style={{ width: 18, height: 18 }}
-          />
-          <Text className="font-sans-sb text-button text-surface-on">CONTINUE WITH GOOGLE</Text>
-        </Pressable>
-
-        <View className="mt-auto pt-10">
-          <Text className="text-center font-sans text-body-sm text-surface-on-variant">
-            By continuing you agree to EventKart's{' '}
-            <Text className="text-tertiary-on-container font-sans-md">Terms</Text> and{' '}
-            <Text className="text-tertiary-on-container font-sans-md">Privacy Policy</Text>.
-          </Text>
-          {__DEV__ ? (
-            <Text className="text-center font-sans text-label-md text-surface-on-variant mt-3">
-              API: {SERVICE_URLS.user}
-            </Text>
-          ) : null}
-        </View>
-      </View>
-    </Screen>
-  );
-}
+      const styles = StyleSheet.create({
+        container: {
+          flex: 1,
+          paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 16,
+          paddingBottom: Platform.OS === 'android' ? StatusBar.currentHeight : 16,
+          backgroundColor: '#fcf8fa', // bg-background
+        },
+        flexGrow: {
+          flex: 1,
+        },
+        header: {
+          height: 64,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 16,
+          backgroundColor: '#000000',
+          borderBottomWidth: 1,
+          borderBottomColor: '#e2e8f0', // border-slate-200/60
+          borderTopLeftRadius: 8,
+          borderTopRightRadius: 8,
+        },
+        headerTitle: {
+          fontSize: 30,
+          fontWeight: '600',
+          fontStyle: 'bold',
+          color: '#ffffff',
+          fontFamily: Platform.OS === 'ios' ? 'Noto Serif' : 'serif',
+        },
+        backButton: {
+          padding: 8,
+        },
+        iconText: {
+          fontFamily: 'Material Symbols Outlined', // Replace with icon library
+          fontSize: 24,
+          color: '#64748b',
+        },
+        placeholder: {
+          width: 40,
+        },
+        scrollContent: {
+          flexGrow: 1,
+          paddingHorizontal: 24,
+          paddingBottom: 32,
+        },
+        heroSection: {
+          marginTop: 40,
+          marginBottom: 40,
+          alignItems: 'center',
+        },
+        title: {
+          fontSize: 30, // text-h2
+          fontWeight: '500',
+          color: '#000000',
+          marginBottom: 8,
+          fontFamily: Platform.OS === 'ios' ? 'Noto Serif' : 'serif',
+        },
+        subtitle: {
+          fontSize: 16,
+          color: '#45464d', // text-on-surface-variant
+          textAlign: 'center',
+          lineHeight: 24,
+        },
+        form: {
+          flex: 1,
+        },
+        label: {
+          fontSize: 12,
+          fontWeight: '500',
+          color: '#45464d',
+          letterSpacing: 1,
+          marginBottom: 8,
+          paddingLeft: 4,
+        },
+        inputContainer: {
+          flexDirection: 'row',
+          gap: 8,
+        },
+        countrySelector: {
+          height: 50,
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: '#ffffff',
+          borderWidth: 1,
+          borderColor: '#c6c6cd',
+          borderRadius: 8,
+          paddingHorizontal: 12,
+          gap: 4,
+        },
+        phoneInput: {
+          flex: 1,
+          height: 50,
+          backgroundColor: '#ffffff',
+          borderWidth: 1,
+          borderColor: '#c6c6cd',
+          borderRadius: 8,
+          paddingHorizontal: 16,
+          fontSize: 16,
+          color: '#1b1b1d',
+        },
+        inputText: {
+          fontSize: 16,
+          color: '#1b1b1d',
+        },
+        dropdownIcon: {
+          fontFamily: 'Material Symbols Outlined', // Replace with icon library
+          fontSize: 20,
+          color: '#c6c6cd',
+        },
+        footer: {
+          marginTop: 'auto',
+          paddingTop: 24,
+        },
+        submitButton: {
+          backgroundColor: '#000000', // bg-primary[cite: 2]
+          height: 56,
+          borderRadius: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 2,
+        },
+        disabledButton: {
+          backgroundColor: '#c6c6cd',
+        },
+        submitButtonText: {
+          color: '#ffffff',
+          fontSize: 14,
+          fontWeight: '600',
+          letterSpacing: 0.2,
+        },
+        buttonIcon: {
+          fontSize: 18,
+          color: '#ffffff',
+        },
+        loginRedirect: {
+          flexDirection: 'row',
+          justifyContent: 'center',
+          marginTop: 24,
+          alignItems: 'center',
+        },
+        bodySm: {
+          fontSize: 14,
+          color: '#45464d',
+        },
+        linkText: {
+          fontSize: 14,
+          fontWeight: '600',
+          color: '#000000',
+        },
+        borderView: {
+          flex: 1,
+          borderWidth: 1,
+          borderColor: '#c6c6cd',
+          borderRadius: 8,
+          marginHorizontal: 16,
+        },
+      });
+//     <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
+//       <StatusBar style="dark" />
+//
+//       {/* Top App Bar */}
+//       <View className="h-16 flex-row items-center justify-between px-6 bg-white border-b border-outline-variant/60 shadow-sm">
+//         <View className="w-10" />
+//         <Text className="font-serif text-[18px] text-surface-on italic">EventKart</Text>
+//         <View className="w-10" />
+//       </View>
+//
+//       {/* Main Content */}
+//       <View className="flex-1 px-6">
+//         {/* Header */}
+//         <View className="mt-10 mb-8 items-center">
+//           <Text className="font-serif-bold text-h2 text-primary-container">Welcome</Text>
+//           <Text className="font-sans text-body-md text-surface-on-variant text-center mt-2 leading-relaxed">
+//             Enter your phone number to continue or create a new account.
+//           </Text>
+//         </View>
+//
+//         {/* Phone Input */}
+//         <View className="gap-1.5">
+//           <Text className="font-sans-md text-label-md uppercase tracking-wider text-surface-on-variant pl-1">
+//             Phone Number
+//           </Text>
+//           <View className="flex-row items-center gap-2">
+//             {/* Country Code */}
+//             <View className="h-[50px] px-4 bg-surface-container-lowest border border-outline-variant rounded-lg items-center justify-center">
+//               <Text className="font-sans text-body-md text-surface-on">+91</Text>
+//             </View>
+//             {/* Number Field */}
+//             <TextInput
+//               value={phone}
+//               onChangeText={setPhone}
+//               placeholder="98765 43210"
+//               placeholderTextColor="#76777d"
+//               keyboardType="phone-pad"
+//               autoFocus
+//               className="flex-1 h-[50px] bg-surface-container-lowest border border-outline-variant rounded-lg px-4 font-sans text-body-md text-surface-on"
+//               style={{ outline: 'none' } as any}
+//             />
+//           </View>
+//         </View>
+//
+//         {/* CTA */}
+//         <View className="mt-auto pb-6">
+//           <TouchableOpacity
+//             onPress={handleSendOtp}
+//             disabled={loading}
+//             activeOpacity={0.88}
+//             className="w-full bg-primary-container flex-row items-center justify-center gap-2 py-4 rounded-lg shadow-sm"
+//           >
+//             <Text className="font-sans-sb text-button text-white uppercase tracking-wide">
+//               {loading ? 'Sending…' : 'Send Verification Code'}
+//             </Text>
+//             {!loading && <ArrowRight size={18} color="#ffffff" />}
+//           </TouchableOpacity>
+//
+//           {__DEV__ ? (
+//             <Text className="text-center font-sans text-label-md text-surface-on-variant mt-4">
+//               API: {SERVICE_URLS.user}
+//             </Text>
+//           ) : null}
+//         </View>
+//       </View>
+//     </SafeAreaView>
+//   );
+// }

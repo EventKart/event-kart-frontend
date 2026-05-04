@@ -1,5 +1,5 @@
 import { ImageBackground, Pressable, Text, View } from 'react-native';
-import { MapPin, Star } from 'lucide-react-native';
+import { Heart, MapPin, Star } from 'lucide-react-native';
 
 import { Badge } from '@/components/ui/Badge';
 import { VENDOR_TYPE_META } from '@/constants/vendor';
@@ -35,34 +35,90 @@ export function VendorCard({ vendor, onPress, variant = 'list' }: VendorCardProp
     );
   }
 
+  // ── "Curated for You" card style ──
   return (
     <Pressable
       onPress={onPress}
-      className="bg-surface-container-lowest rounded-xl border border-outline-variant/40 overflow-hidden"
+      className="bg-surface-container-lowest rounded-xl border border-outline-variant/50 overflow-hidden active:opacity-95"
     >
-      <ImageBackground source={{ uri: meta.thumb }} className="h-40" resizeMode="cover">
-        <View className="flex-1 p-3 justify-between">
-          <View className="flex-row justify-between">
-            <Badge label={meta.label} tone="gold" />
-            <View className="flex-row items-center bg-surface-container-lowest/90 rounded-full px-2 py-1 gap-1">
-              <Star size={12} color="#735c00" fill="#735c00" />
-              <Text className="font-sans-sb text-label-md text-surface-on">4.8</Text>
-            </View>
+      {/* Card image */}
+      <ImageBackground source={{ uri: meta.thumb }} className="h-52" resizeMode="cover">
+        <View className="flex-1 p-3 flex-row items-start justify-between">
+          {/* Vendor type badge — top left */}
+          <View className="bg-surface-container-lowest/90 rounded-lg px-2.5 py-1 border border-outline-variant/30">
+            <Text
+              style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#131b2e' }}
+            >
+              {meta.label}
+            </Text>
           </View>
+
+          {/* Heart button — top right */}
+          <Pressable
+            className="w-8 h-8 bg-surface-container-lowest/80 rounded-full items-center justify-center border border-outline-variant/30"
+            hitSlop={8}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Heart size={15} color="#45464d" />
+          </Pressable>
         </View>
       </ImageBackground>
-      <View className="p-4 gap-1">
-        <Text className="font-serif-bold text-body-lg text-surface-on">{vendor.name}</Text>
+
+      {/* Card body */}
+      <View className="p-5">
+        {/* Name + rating row */}
+        <View className="flex-row items-start justify-between gap-2 mb-2">
+          <Text
+            className="flex-1 font-serif-bold text-h3 text-primary-container leading-tight"
+            numberOfLines={1}
+          >
+            {vendor.name}
+          </Text>
+          <View className="flex-row items-center bg-surface-container px-2 py-1 rounded-lg gap-1 mt-1">
+            <Star size={12} color="#735c00" fill="#735c00" />
+            <Text
+              style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#1b1b1d' }}
+            >
+              4.8
+            </Text>
+          </View>
+        </View>
+
+        {/* Subtitle / description */}
         {subtitle ? (
-          <Text className="font-sans text-body-sm text-surface-on-variant" numberOfLines={1}>
+          <Text
+            className="font-sans text-body-sm text-surface-on-variant"
+            numberOfLines={2}
+          >
             {subtitle}
           </Text>
         ) : null}
-        <View className="flex-row items-center gap-1 mt-1">
-          <MapPin size={14} color="#76777d" />
-          <Text className="font-sans text-body-sm text-surface-on-variant">
-            {vendor.address ?? 'Bengaluru, India'}
-          </Text>
+
+        {/* Footer */}
+        <View className="mt-4 pt-4 border-t border-outline-variant/30 flex-row items-center justify-between">
+          <View className="flex-row items-center gap-1.5">
+            <MapPin size={14} color="#76777d" />
+            <Text className="font-sans text-body-sm text-surface-on-variant">
+              {vendor.address ?? 'Bengaluru, India'}
+            </Text>
+          </View>
+          <View
+            className={`px-2 py-0.5 rounded-full ${
+              vendor.state === 'ACTIVE'
+                ? 'bg-tertiary-fixed'
+                : 'bg-surface-container'
+            }`}
+          >
+            <Text
+              style={{
+                fontFamily: 'Inter_600SemiBold',
+                fontSize: 11,
+                color: vendor.state === 'ACTIVE' ? '#4e3d00' : '#45464d',
+              }}
+            >
+              {vendor.state === 'ACTIVE' ? 'Active' : vendor.state}
+            </Text>
+          </View>
         </View>
       </View>
     </Pressable>
@@ -72,19 +128,21 @@ export function VendorCard({ vendor, onPress, variant = 'list' }: VendorCardProp
 function subtitleFor(v: Vendor): string {
   switch (v.type) {
     case 'VENUE':
-      return v.capacity ? `Hosts up to ${v.capacity} guests` : 'Premium venue';
+      return v.capacity ? `Hosts up to ${v.capacity} guests` : 'Premium event venue';
     case 'CATERER':
       return v.cuisines?.slice(0, 3).join(' · ') ?? 'Multi-cuisine catering';
     case 'DECORATOR':
-      return v.themes?.slice(0, 3).join(' · ') ?? 'Elegant decor';
+      return v.themes?.slice(0, 3).join(' · ') ?? 'Elegant event décor';
     case 'PHOTOGRAPHER':
-      return [v.providesDroneShoot && 'Drone', v.providesVideography && 'Video']
+      return [v.providesDroneShoot && 'Drone shoot', v.providesVideography && 'Videography']
         .filter(Boolean)
-        .join(' · ') || 'Wedding photography';
+        .join(' · ') || 'Wedding & event photography';
     case 'PRIEST':
-      return v.languages?.slice(0, 3).join(' · ') ?? 'Vedic ceremonies';
+      return v.languages?.slice(0, 3).join(' · ') ?? 'Vedic & traditional ceremonies';
     case 'BAND':
-      return v.numberOfMembers ? `${v.numberOfMembers}-piece ensemble` : 'Live music';
+      return v.numberOfMembers
+        ? `${v.numberOfMembers}-piece live ensemble`
+        : 'Live music & entertainment';
     default:
       return '';
   }

@@ -1,6 +1,7 @@
 import '../global.css';
 
 import { useEffect } from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
@@ -19,6 +20,31 @@ import {
 import { useAuthStore } from '@/store/authStore';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+
+function BrandLoadingScreen() {
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: '#fcf8fa',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 36,
+          fontWeight: '700',
+          color: '#131b2e',
+          letterSpacing: -0.5,
+        }}
+      >
+        EventKart
+      </Text>
+      <ActivityIndicator color="#131b2e" style={{ marginTop: 16 }} />
+    </View>
+  );
+}
 
 export default function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
@@ -44,8 +70,10 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError, hydrated]);
 
-  if (!fontsLoaded && !fontError) return null;
-  if (!hydrated) return null;
+  // Block all screens until token has been read from storage and fonts are ready.
+  // index.tsx handles the actual route decision synchronously once this unblocks.
+  const ready = (fontsLoaded || fontError) && hydrated;
+  if (!ready) return <BrandLoadingScreen />;
 
   return (
     <Stack

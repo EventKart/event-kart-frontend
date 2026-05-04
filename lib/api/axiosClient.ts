@@ -1,28 +1,27 @@
 import axios, { type AxiosInstance } from 'axios';
-import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 import { SERVICE_URLS } from './base';
+import { useAuthStore } from '@/store/authStore';
 
-async function readToken(): Promise<string | null> {
-  try {
-    return await SecureStore.getItemAsync('auth_token');
-  } catch {
-    return null;
-  }
+// Read directly from in-memory Zustand state (always up-to-date) — see
+// graphqlClient.ts for the rationale.
+function readToken(): string | null {
+  return useAuthStore.getState().token;
 }
 
 function createClient(baseURL: string): AxiosInstance {
   const instance = axios.create({ baseURL, timeout: 10_000 });
 
-  instance.interceptors.request.use(async (config) => {
-    const token = await readToken();
+  instance.interceptors.request.use((config) => {
+    const token = readToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     if (__DEV__) {
       console.log(
         `[api] → ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`,
+        token ? 'with auth' : 'no auth',
       );
     }
     return config;
@@ -45,6 +44,13 @@ function createClient(baseURL: string): AxiosInstance {
           data ?? error.message,
           Platform.OS === 'web' ? '' : `(baseURL=${error.config?.baseURL})`,
         );
+      }
+      // Token expired or rejected — drop it so the user is sent back to sign-in.
+      // Skip during the initial /me hydrate call; that flow handles 401 itself.
+      const status = error.response?.status;
+      const url: string = error.config?.url ?? '';
+      if ((status === 401 || status === 403) && !url.includes('/api/users/me') && !url.includes('/auth/logout')) {
+        useAuthStore.getState().signOut();
       }
       return Promise.reject(error);
     },

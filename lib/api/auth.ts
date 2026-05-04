@@ -46,3 +46,9 @@ export async function getCurrentUser(): Promise<User> {
   const { data } = await userClient.get<User>('/api/users/me');
   return data;
 }
+
+export async function logoutUser(authToken: string): Promise<void> {
+  await userClient.post('/auth/logout', null, {
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+}

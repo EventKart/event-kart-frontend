@@ -1,7 +1,15 @@
 import { gql } from 'graphql-request';
 
 import { vendorGql } from './graphqlClient';
-import type { Vendor, VendorInput, VendorState } from '@/types';
+import type { Vendor, VendorInput, VendorState, VendorType } from '@/types';
+
+export interface SearchVendorsResult {
+  vendors: Vendor[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
 
 const VENDOR_FRAGMENT = gql`
   fragment VendorFields on Vendor {
@@ -41,6 +49,33 @@ export async function getVendor(id: string): Promise<Vendor | null> {
   `;
   const data = await vendorGql.request<{ getVendor: Vendor | null }>(query, { id });
   return data.getVendor;
+}
+
+export async function searchVendors(
+  query?: string,
+  types?: VendorType[],
+  page = 1,
+  pageSize = 10
+): Promise<SearchVendorsResult> {
+  const q = gql`
+    ${VENDOR_FRAGMENT}
+    query SearchVendors($query: String, $types: [VendorType!], $page: Int, $pageSize: Int) {
+      searchVendors(query: $query, types: $types, page: $page, pageSize: $pageSize) {
+        vendors { ...VendorFields }
+        page
+        pageSize
+        totalItems
+        totalPages
+      }
+    }
+  `;
+  const data = await vendorGql.request<{ searchVendors: SearchVendorsResult }>(q, {
+    query,
+    types,
+    page,
+    pageSize,
+  });
+  return data.searchVendors;
 }
 
 export async function createVendor(input: VendorInput): Promise<Vendor> {

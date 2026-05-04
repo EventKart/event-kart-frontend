@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-const host = Platform.select({ android: '10.0.2.2', default: 'localhost' });
+const host = Platform.select({ android: '10.0.2.2', default: '192.168.29.108' });
 
 export const SERVICE_URLS = {
   user: process.env.EXPO_PUBLIC_USER_API_URL ?? `http://${host}:8081`,

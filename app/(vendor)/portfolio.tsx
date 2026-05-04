@@ -1,9 +1,11 @@
-import { Alert, Image, Pressable, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, Text, View, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { ImagePlus, Trash2 } from 'lucide-react-native';
+import { ImagePlus, LogOut, Trash2 } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
-import { Screen } from '@/components/ui/Screen';
 import { Badge } from '@/components/ui/Badge';
+import { logoutUser } from '@/lib/api/auth';
 import { useAuthStore } from '@/store/authStore';
 import { useMedia } from '@/hooks/useMedia';
 
@@ -39,8 +41,33 @@ export default function VendorPortfolio() {
     ]);
   };
 
+  const signOut = useAuthStore((s) => s.signOut);
+
+  const handleSignOut = () => {
+    const doSignOut = () => {
+      const currentToken = useAuthStore.getState().token;
+      if (currentToken) void logoutUser(currentToken).catch(() => {});
+      signOut();
+    };
+    if (Platform.OS === 'web') {
+      if (window.confirm('Sign out of EventKart? You will need to sign in again.')) doSignOut();
+      return;
+    }
+    Alert.alert('Sign out', 'You will need to sign in again to use EventKart.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign out', style: 'destructive', onPress: doSignOut },
+    ]);
+  };
+
   return (
-    <Screen scroll padded={false}>
+    <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
+      <StatusBar style="dark" />
+      <View className="h-16 flex-row items-center justify-between px-6 bg-white border-b border-outline-variant/60 shadow-sm">
+        <View className="w-10" />
+        <Text className="font-serif-bold text-[22px] text-surface-on">EventKart</Text>
+        <View className="w-10" />
+      </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
       <View className="px-5 pt-6 pb-2">
         <Text className="font-sans-md text-label-md uppercase tracking-wider text-surface-on-variant">
           Portfolio
@@ -84,6 +111,18 @@ export default function VendorPortfolio() {
           ))}
         </View>
       </View>
-    </Screen>
+
+      {/* Sign Out */}
+      <Pressable
+        onPress={handleSignOut}
+        className="mx-5 mb-4 bg-surface-container-lowest rounded-xl border border-error/20 p-5 flex-row items-center active:bg-error-container/30"
+      >
+        <View className="w-10 h-10 rounded-full bg-error-container/50 items-center justify-center mr-4">
+          <LogOut size={18} color="#ba1a1a" />
+        </View>
+        <Text className="flex-1 font-sans-sb text-body-md text-error">Sign Out</Text>
+      </Pressable>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

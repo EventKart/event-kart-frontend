@@ -29,7 +29,8 @@ export function Input({
       <View
         className={`flex-row items-center bg-surface-container-lowest rounded-lg border ${
           error ? 'border-error' : 'border-outline-variant'
-        } px-4 h-12`}
+        } px-4`}
+        style={{ height: 50 }}
       >
         {leftIcon ? <View className="mr-2">{leftIcon}</View> : null}
         <TextInput

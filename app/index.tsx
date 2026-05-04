@@ -1,15 +1,18 @@
 import { Redirect } from 'expo-router';
 
 import { useAuthStore } from '@/store/authStore';
+import { isProfileComplete } from '@/types';
 
+// This renders only after _layout.tsx has confirmed fonts + token hydration are
+// ready, so all store values are final — no async redirect races.
 export default function IndexRedirect() {
-  const { isAuthenticated, currentRole, vendor } = useAuthStore();
+  const { isAuthenticated, currentRole, vendor, user } = useAuthStore();
 
   if (!isAuthenticated) {
     return <Redirect href="/(auth)/sign-in" />;
   }
-  if (!currentRole) {
-    return <Redirect href="/(auth)/role-select" />;
+  if (!isProfileComplete(user)) {
+    return <Redirect href="/complete-profile" />;
   }
   if (currentRole === 'VENDOR' && !vendor) {
     return <Redirect href="/(auth)/vendor-onboard/step-1-type" />;

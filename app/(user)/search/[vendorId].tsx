@@ -107,6 +107,60 @@ export default function VendorDetailScreen() {
             )}
           </View>
 
+          {/* Service Packages */}
+          <SectionTitle>Service Packages</SectionTitle>
+          <View className="gap-3">
+            {/* Essential Package */}
+            <View className="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-5">
+              <Text className="font-serif-bold text-h3 text-surface-on">The Essential</Text>
+              <Text className="font-sans-sb text-body-lg text-surface-on-variant mt-1">₹ on request</Text>
+              <Text className="font-sans text-body-sm text-surface-on-variant mt-2">
+                Perfect for intimate gatherings and focused coverage of the main events.
+              </Text>
+              <View className="gap-2 mt-3">
+                {['6 hours of continuous coverage', '1 Lead Professional', 'Digital gallery delivery'].map((f) => (
+                  <View key={f} className="flex-row items-start gap-2">
+                    <Text className="text-tertiary-container mt-0.5">✓</Text>
+                    <Text className="font-sans text-body-sm text-surface-on-variant flex-1">{f}</Text>
+                  </View>
+                ))}
+              </View>
+              <View className="mt-4 border border-outline py-2.5 rounded items-center">
+                <Text className="font-sans-sb text-button text-surface-on uppercase tracking-wide">
+                  Select Package
+                </Text>
+              </View>
+            </View>
+            {/* Signature Package - highlighted */}
+            <View className="bg-primary-container rounded-xl p-5 overflow-hidden">
+              <View className="absolute top-0 right-0 bg-tertiary-container px-3 py-1 rounded-bl-xl">
+                <Text className="font-sans-md text-label-md text-tertiary-on-container uppercase tracking-wider">
+                  Most Popular
+                </Text>
+              </View>
+              <Text className="font-serif-bold text-h3 text-white mt-4">The Signature</Text>
+              <Text className="font-sans-sb text-body-lg text-primary-container/70 mt-1" style={{ color: '#bec6e0' }}>
+                ₹ on request
+              </Text>
+              <Text className="font-sans text-body-sm text-primary-on-container mt-2" style={{ color: '#7c839b' }}>
+                Comprehensive coverage ensuring every detail and emotion is captured.
+              </Text>
+              <View className="gap-2 mt-3">
+                {['10 hours of continuous coverage', '2 Professional team members', 'Digital gallery (600+ deliverables)', 'Complimentary consultation'].map((f) => (
+                  <View key={f} className="flex-row items-start gap-2">
+                    <Text style={{ color: '#ffe088', marginTop: 2 }}>✓</Text>
+                    <Text className="font-sans text-body-sm flex-1" style={{ color: '#7c839b' }}>{f}</Text>
+                  </View>
+                ))}
+              </View>
+              <View className="mt-4 bg-white py-2.5 rounded items-center">
+                <Text className="font-sans-sb text-button text-primary-container uppercase tracking-wide">
+                  Select Package
+                </Text>
+              </View>
+            </View>
+          </View>
+
           <SectionTitle>Contact</SectionTitle>
           <View className="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 gap-4">
             <View className="flex-row items-center gap-3">

@@ -15,7 +15,7 @@ export function TypeFilter({ value, onChange }: TypeFilterProps) {
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ gap: 8, paddingHorizontal: 20 }}
     >
-      <Chip label="All" active={value === null} onPress={() => onChange(null)} />
+      <Chip label="All Categories" active={value === null} onPress={() => onChange(null)} />
       {VENDOR_TYPES.map((t) => (
         <Chip
           key={t}
@@ -45,9 +45,12 @@ function Chip({ label, active, onPress }: ChipProps) {
       }`}
     >
       <Text
-        className={`font-sans-sb text-label-md ${
-          active ? 'text-primary-on' : 'text-surface-on'
-        }`}
+        style={{
+          fontFamily: 'Inter_600SemiBold',
+          fontSize: 12,
+          color: active ? '#ffffff' : '#1b1b1d',
+          letterSpacing: 0.3,
+        }}
       >
         {label}
       </Text>

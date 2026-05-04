@@ -5,12 +5,26 @@ export type AuthProvider = 'PHONE' | 'GOOGLE';
 
 export interface User {
   id: string;
-  phoneNumber?: string;
-  email?: string;
-  name?: string;
+  phoneNumber?: string | null;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  address?: string | null;
   role: Role;
   authProvider: AuthProvider;
   isVerified: boolean;
+}
+
+export interface UpdateUserInput {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  address?: string;
+}
+
+export function isProfileComplete(user: User | null | undefined): boolean {
+  if (!user) return false;
+  return Boolean(user.firstName?.trim() && user.lastName?.trim());
 }
 
 export type VendorType =
