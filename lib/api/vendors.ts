@@ -55,7 +55,7 @@ export async function searchVendors(
   query?: string,
   types?: VendorType[],
   page = 1,
-  pageSize = 10
+  pageSize = 30
 ): Promise<SearchVendorsResult> {
   const q = gql`
     ${VENDOR_FRAGMENT}

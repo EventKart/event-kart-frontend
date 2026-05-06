@@ -184,17 +184,11 @@ export default function ProfileScreen() {
             <Text className="font-serif-bold text-h3 text-surface-on">Personal Information</Text>
           </View>
           <View className="gap-1">
-            {user?.email ? (
-              <InfoRow icon={<Mail size={18} color="#45464d" />} label="Email Address" value={user.email} />
-            ) : null}
+            <InfoRow icon={<Mail size={18} color="#45464d" />} label="Email Address" value={user?.email ?? 'Not set'} />
             {user?.phoneNumber ? (
               <InfoRow icon={<Phone size={18} color="#45464d" />} label="Phone Number" value={user.phoneNumber} />
             ) : null}
-            {user?.address ? (
-              <InfoRow icon={<MapPin size={18} color="#45464d" />} label="Primary Location" value={user.address} />
-            ) : (
-              <InfoRow icon={<MapPin size={18} color="#45464d" />} label="Primary Location" value="Not set" />
-            )}
+            <InfoRow icon={<MapPin size={18} color="#45464d" />} label="Primary Location" value={user?.address ?? 'Not set'} />
           </View>
         </View>
 
