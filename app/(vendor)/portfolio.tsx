@@ -1,6 +1,6 @@
 import { Alert, Platform, Pressable, ScrollView, Text, View, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { ImagePlus, LogOut, Trash2 } from 'lucide-react-native';
+import { ImagePlus, LogOut, Mail, Phone, Trash2 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
@@ -77,6 +77,35 @@ export default function VendorPortfolio() {
           High quality photos help you stand out and win bookings.
         </Text>
       </View>
+
+      {/* Vendor Contact Info */}
+      {vendor ? (
+        <View className="mx-5 mt-2 mb-5 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-5">
+          <View className="flex-row items-center gap-2 pb-3 border-b border-surface-variant mb-4">
+            <Text className="font-serif-bold text-h3 text-surface-on">Contact Information</Text>
+          </View>
+          <View className="gap-2">
+            <View className="flex-row items-center gap-3 p-2">
+              <Mail size={18} color="#45464d" />
+              <View>
+                <Text className="font-sans-md text-label-md text-surface-on-variant">Email Address</Text>
+                <Text className="font-sans-md text-body-md text-surface-on mt-0.5">
+                  {vendor.email || 'Not set'}
+                </Text>
+              </View>
+            </View>
+            <View className="flex-row items-center gap-3 p-2">
+              <Phone size={18} color="#45464d" />
+              <View>
+                <Text className="font-sans-md text-label-md text-surface-on-variant">Phone Number</Text>
+                <Text className="font-sans-md text-body-md text-surface-on mt-0.5">
+                  {vendor.contactNumber || 'Not set'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      ) : null}
 
       <View className="px-5 pt-4 pb-10">
         <View className="flex-row flex-wrap -mx-1">

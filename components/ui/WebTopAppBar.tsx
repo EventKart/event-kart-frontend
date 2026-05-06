@@ -41,7 +41,7 @@ export function WebTopAppBar({ variant = 'user' }: WebTopAppBarProps) {
   return (
     <View
       style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: 'black',
         borderBottomWidth: 1,
         borderBottomColor: '#c6c6cd',
         shadowColor: '#0f172a',
@@ -68,7 +68,7 @@ export function WebTopAppBar({ variant = 'user' }: WebTopAppBarProps) {
       >
         {/* Brand */}
         <Text
-          style={{ fontFamily: 'NotoSerif_700Bold', fontSize: 24, color: '#131b2e', letterSpacing: -0.3 }}
+          style={{ fontFamily: 'NotoSerif_700Bold', fontSize: 30, color: 'white', letterSpacing: -0.3 }}
         >
           EventKart
         </Text>

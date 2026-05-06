@@ -8,7 +8,7 @@ import { isProfileComplete } from '@/types';
 export default function IndexRedirect() {
   const { isAuthenticated, currentRole, vendor, user } = useAuthStore();
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return <Redirect href="/(auth)/sign-in" />;
   }
   if (!isProfileComplete(user)) {

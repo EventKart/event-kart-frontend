@@ -32,6 +32,7 @@ export default function CreateProfileScreen() {
   const [roleChoice, setRoleChoice] = useState<Role>('USER');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -59,6 +60,7 @@ export default function CreateProfileScreen() {
       const updated = await updateUser({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
+        email: email.trim() || undefined,
         address: address.trim() || undefined,
       });
       setUser({ ...updated, role: roleChoice });
@@ -69,6 +71,7 @@ export default function CreateProfileScreen() {
         ...user,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
+        email: email.trim() || user.email,
         address: address.trim() || user.address,
         role: roleChoice,
       });
@@ -174,6 +177,17 @@ export default function CreateProfileScreen() {
               />
             </View>
           </View>
+
+          {/* Email (optional) */}
+          <Input
+            label="Email Address (optional)"
+            placeholder="you@example.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
 
           {/* Address */}
           <Input
