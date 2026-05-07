@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -6,13 +6,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
-  TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, X } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
@@ -21,6 +18,7 @@ import { WebTopAppBar } from '@/components/ui/WebTopAppBar';
 import { EventSearchBar } from '@/components/ui/EventSearchBar';
 import { TypeFilter } from '@/components/vendor/TypeFilter';
 import { VendorCard } from '@/components/vendor/VendorCard';
+import { VendorCardSkeleton } from '@/components/vendor/VendorCardSkeleton';
 import { useIsWide } from '@/hooks/useIsWide';
 import { useSearchVendors } from '@/hooks/useVendors';
 import { useAuthStore } from '@/store/authStore';
@@ -35,20 +33,11 @@ export default function SearchScreen() {
   const user = useAuthStore((s) => s.user);
 
   const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [type, setType] = useState<VendorType | null>(null);
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedQuery(query), 400);
-    return () => clearTimeout(t);
-  }, [query]);
 
   const isWide = useIsWide();
   const { width } = useWindowDimensions();
-  const { vendors, loading, loadingMore, hasMore, loadMore } = useSearchVendors(
-    debouncedQuery,
-    type
-  );
+  const { vendors, loading, loadingMore, hasMore, loadMore } = useSearchVendors(query, type);
 
   const cols = isWide ? 3 : 1;
   const cardWidth =
@@ -80,7 +69,7 @@ export default function SearchScreen() {
         contentContainerStyle={{ paddingBottom: 32 }}
       >
         {/* Search Bar */}
-        <EventSearchBar query={query} onQueryChange={setQuery} />
+        <EventSearchBar onQueryChange={setQuery} />
 
         {/* Category Chips */}
         <View className="pb-5 pt-1">
@@ -106,11 +95,12 @@ export default function SearchScreen() {
           </View>*/}
 
           {loading ? (
-            <View className="py-16 items-center gap-3">
-              <ActivityIndicator color="#131b2e" size="large" />
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: '#76777d' }}>
-                Finding vendors…
-              </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: COL_GAP, rowGap: ROW_GAP }}>
+              {Array.from({ length: cols === 1 ? 3 : 6 }).map((_, i) => (
+                <View key={i} style={{ width: cardWidth }}>
+                  <VendorCardSkeleton />
+                </View>
+              ))}
             </View>
           ) : vendors.length === 0 ? (
             <View className="py-16 items-center gap-2">

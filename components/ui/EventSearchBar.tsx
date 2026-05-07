@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -9,8 +9,19 @@ import {
 } from 'react-native';
 import { Search } from 'lucide-react-native';
 
-export function EventSearchBar({ query, onQueryChange }) {
-    const [isFocused, setIsFocused] = useState(false);
+interface EventSearchBarProps {
+  onQueryChange: (q: string) => void;
+}
+
+export function EventSearchBar({ onQueryChange }: EventSearchBarProps) {
+  const [value, setValue] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => onQueryChange(value), 400);
+    return () => clearTimeout(t);
+  }, [value, onQueryChange]);
+
   return (
     <View style={styles.container}>
       <View style={[styles.searchWrapper,
@@ -25,8 +36,8 @@ export function EventSearchBar({ query, onQueryChange }) {
           style={styles.input}
           placeholder="Discover premium vendors..."
           placeholderTextColor="#94a3b8"
-          value={query}
-          onChangeText={onQueryChange}
+          value={value}
+          onChangeText={setValue}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           returnKeyType="search"
@@ -36,7 +47,7 @@ export function EventSearchBar({ query, onQueryChange }) {
         <TouchableOpacity
           style={styles.button}
           activeOpacity={0.8}
-          onPress={() => setQuery('')}>
+          onPress={() => setValue('')}>
           <Text style={styles.buttonText}>Search</Text>
         </TouchableOpacity>
       </View>
@@ -89,6 +100,9 @@ const styles = StyleSheet.create({
     color: '#0f172a',
     height: '100%',
     paddingVertical: 0, // Fixes vertical alignment on some Android versions
+    ...Platform.select({
+      web: { outlineStyle: 'none' } as any,
+    }),
   },
   button: {
     backgroundColor: '#0f172a',
