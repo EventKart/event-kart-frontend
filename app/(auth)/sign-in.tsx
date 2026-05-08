@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import {
   Alert,
   Platform,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  StyleSheet,
   KeyboardAvoidingView,
-  Dimensions,
+  useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowRight, Star } from "lucide-react-native";
@@ -29,8 +29,7 @@ import Reanimated, {
 import { requestPhoneOtp } from "@/lib/api/auth";
 import { SERVICE_URLS } from "@/lib/api/base";
 import { useAuthStore } from "@/store/authStore";
-
-const { width: SW, height: SH } = Dimensions.get("window");
+import { useIsWide } from "@/hooks/useIsWide";
 
 function describeError(e: any): string {
   if (e?.response) {
@@ -112,10 +111,11 @@ function BokehCircle({ size, left, top, color, delay }: BokehProps) {
 export default function SignInScreen() {
   const router = useRouter();
   const setPendingPhone = useAuthStore((s) => s.setPendingPhone);
+  const { width: winW, height: winH } = useWindowDimensions();
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
-
+  const isWide = useIsWide();
   const formattedNumber = phone.replace(/\D/g, "");
 
   const handleSendOtp = async () => {
@@ -148,96 +148,137 @@ export default function SignInScreen() {
     }
   };
 
-  return (
-    <View style={styles.root}>
-      <StatusBar style="light" />
+  // ── Web: full-viewport overlay, brand above + card below ─────────────────
+  if (isWide) {
+    return (
+      <View
+        style={{
+          position: "fixed" as any,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "#0b1020",
+          overflow: "hidden",
+        }}
+      >
+        <StatusBar style="light" />
 
-      {/* Bokeh light layer */}
-      <BokehCircle
-        size={340}
-        left={30}
-        top={160}
-        color="rgba(203,167,47,0.22)"
-        delay={0}
-      />
-      <BokehCircle
-        size={240}
-        left={SW - 50}
-        top={300}
-        color="rgba(203,167,47,0.16)"
-        delay={800}
-      />
-      <BokehCircle
-        size={180}
-        left={SW * 0.5}
-        top={60}
-        color="rgba(30,58,110,0.5)"
-        delay={300}
-      />
-      <BokehCircle
-        size={300}
-        left={50}
-        top={SH * 0.65}
-        color="rgba(19,27,46,0.9)"
-        delay={600}
-      />
-      <BokehCircle
-        size={220}
-        left={SW * 0.8}
-        top={SH * 0.45}
-        color="rgba(203,167,47,0.12)"
-        delay={1200}
-      />
-      <BokehCircle
-        size={140}
-        left={SW * 0.3}
-        top={SH * 0.8}
-        color="rgba(203,167,47,0.18)"
-        delay={500}
-      />
+        {/* Bokeh scaled to viewport */}
+        <BokehCircle size={winW * 0.32} left={winW * 0.08} top={winH * 0.15} color="rgba(203,167,47,0.22)" delay={0}    />
+        <BokehCircle size={winW * 0.26} left={winW * 0.92} top={winH * 0.58} color="rgba(203,167,47,0.16)" delay={700}  />
+        <BokehCircle size={winW * 0.20} left={winW * 0.55} top={winH * 0.07} color="rgba(30,58,110,0.45)"  delay={300}  />
+        <BokehCircle size={winW * 0.28} left={winW * 0.28} top={winH * 0.76} color="rgba(19,27,46,0.88)"   delay={600}  />
+        <BokehCircle size={winW * 0.18} left={winW * 0.72} top={winH * 0.84} color="rgba(203,167,47,0.14)" delay={1000} />
 
-      {/* Blur overlay — blurs the bokeh for a soft venue-lights effect */}
-      <BlurView intensity={55} tint="dark" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
 
-      <SafeAreaView style={styles.safeArea}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.flex}
-        >
-          {/* Hero */}
-          <Reanimated.View
-            entering={FadeIn.delay(100).duration(900)}
-            style={styles.hero}
-          >
-            <View style={styles.badge}>
+        {/* Centered content column */}
+        <View style={web.centered}>
+          {/* Brand */}
+          <Reanimated.View entering={FadeIn.delay(100).duration(900)} style={web.brand}>
+            <View style={web.badge}>
               <Star size={9} color="#cba72f" fill="#cba72f" />
-              <Text style={styles.badgeText}>EVENTKART</Text>
+              <Text style={web.badgeText}>EVENTKART</Text>
               <Star size={9} color="#cba72f" fill="#cba72f" />
             </View>
-            <Text style={styles.heroTitle}>{"Where Events\nCome Alive"}</Text>
-            <Text style={styles.heroSub}>
+            <Text style={web.heroTitle}>{"Where Events\nCome Alive"}</Text>
+            <Text style={web.heroSub}>Seamlessly discover, book & manage events</Text>
+          </Reanimated.View>
+
+          {/* Form card */}
+          <Reanimated.View entering={FadeInUp.delay(280).duration(600)} style={web.card}>
+            <Text style={web.cardTitle}>Sign In</Text>
+            <Text style={web.cardSub}>Enter your phone number to continue</Text>
+
+            <Text style={web.label}>PHONE NUMBER</Text>
+            <View style={web.inputRow}>
+              <View style={web.dialCode}>
+                <Text style={web.dialCodeText}>+91</Text>
+              </View>
+              <TextInput
+                style={[web.input, focused && web.inputFocused]}
+                placeholder="000 0000000"
+                placeholderTextColor="#c6c6cd"
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={setPhone}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                selectionColor="#cba72f"
+              />
+            </View>
+
+            <TouchableOpacity
+              onPress={handleSendOtp}
+              disabled={loading || formattedNumber.length < 7}
+              activeOpacity={0.85}
+              style={[
+                web.cta,
+                (loading || formattedNumber.length < 7) && web.ctaDisabled,
+              ]}
+            >
+              <Text style={web.ctaText}>
+                {loading ? "Sending…" : "Send Verification Code"}
+              </Text>
+              {!loading && <ArrowRight size={18} color="#ffffff" />}
+            </TouchableOpacity>
+          </Reanimated.View>
+        </View>
+      </View>
+    );
+  }
+
+  // ── Mobile layout ─────────────────────────────────────────────────────────
+  return (
+    <View style={mob.root}>
+      <StatusBar style="light" />
+
+      <BokehCircle size={340} left={winW * 0.06}  top={160}         color="rgba(203,167,47,0.22)" delay={0}    />
+      <BokehCircle size={240} left={winW * 0.88}  top={300}         color="rgba(203,167,47,0.16)" delay={800}  />
+      <BokehCircle size={180} left={winW * 0.5}   top={60}          color="rgba(30,58,110,0.5)"   delay={300}  />
+      <BokehCircle size={300} left={winW * 0.1}   top={winH * 0.65} color="rgba(19,27,46,0.9)"    delay={600}  />
+      <BokehCircle size={220} left={winW * 0.8}   top={winH * 0.45} color="rgba(203,167,47,0.12)" delay={1200} />
+      <BokehCircle size={140} left={winW * 0.3}   top={winH * 0.8}  color="rgba(203,167,47,0.18)" delay={500}  />
+      <BlurView intensity={55} tint="dark" style={StyleSheet.absoluteFill} />
+
+      <SafeAreaView style={mob.safeArea}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={mob.flex}
+        >
+          <Reanimated.View
+            entering={FadeIn.delay(100).duration(900)}
+            style={mob.hero}
+          >
+            <View style={mob.badge}>
+              <Star size={9} color="#cba72f" fill="#cba72f" />
+              <Text style={mob.badgeText}>EVENTKART</Text>
+              <Star size={9} color="#cba72f" fill="#cba72f" />
+            </View>
+            <Text style={mob.heroTitle}>{"Where Events\nCome Alive"}</Text>
+            <Text style={mob.heroSub}>
               Seamlessly discover, book & manage events
             </Text>
           </Reanimated.View>
 
-          {/* Glass card */}
           <Reanimated.View
             entering={FadeInUp.delay(280).duration(650)}
-            style={styles.card}
+            style={mob.card}
           >
-            <Text style={styles.cardTitle}>Sign In</Text>
-            <Text style={styles.cardSubtitle}>
+            <Text style={mob.cardTitle}>Sign In</Text>
+            <Text style={mob.cardSubtitle}>
               Enter your phone number to continue
             </Text>
 
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>PHONE NUMBER</Text>
-              <View style={styles.inputRow}>
-                <View style={styles.dialCode}>
-                  <Text style={styles.dialCodeText}>+91</Text>
+            <View style={mob.field}>
+              <Text style={mob.fieldLabel}>PHONE NUMBER</Text>
+              <View style={mob.inputRow}>
+                <View style={mob.dialCode}>
+                  <Text style={mob.dialCodeText}>+91</Text>
                 </View>
                 <TextInput
-                  style={[styles.input, focused && styles.inputFocused]}
+                  style={[mob.input, focused && mob.inputFocused]}
                   placeholder="000 0000000"
                   placeholderTextColor="rgba(255,255,255,0.25)"
                   keyboardType="phone-pad"
@@ -255,11 +296,11 @@ export default function SignInScreen() {
               disabled={loading || formattedNumber.length < 7}
               activeOpacity={0.85}
               style={[
-                styles.cta,
-                (loading || formattedNumber.length < 7) && styles.ctaDisabled,
+                mob.cta,
+                (loading || formattedNumber.length < 7) && mob.ctaDisabled,
               ]}
             >
-              <Text style={styles.ctaText}>
+              <Text style={mob.ctaText}>
                 {loading ? "Sending…" : "Send Verification Code"}
               </Text>
               {!loading && <ArrowRight size={18} color="#131b2e" />}
@@ -271,7 +312,141 @@ export default function SignInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// ── Web styles ────────────────────────────────────────────────────────────────
+const web = StyleSheet.create({
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+    gap: 32,
+  },
+  brand: {
+    alignItems: "center",
+  },
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    backgroundColor: "rgba(203,167,47,0.1)",
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: "rgba(203,167,47,0.3)",
+    marginBottom: 20,
+  },
+  badgeText: {
+    fontSize: 11,
+    color: "#cba72f",
+    letterSpacing: 2.5,
+    fontWeight: "700",
+  },
+  heroTitle: {
+    fontSize: 52,
+    fontWeight: "700",
+    color: "#ffffff",
+    textAlign: "center",
+    lineHeight: 64,
+    fontFamily: Platform.OS === "ios" ? "Noto Serif" : "serif",
+    marginBottom: 10,
+  },
+  heroSub: {
+    fontSize: 15,
+    color: "rgba(255,255,255,0.45)",
+    textAlign: "center",
+    letterSpacing: 0.2,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 440,
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    padding: 32,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 40,
+    elevation: 20,
+  },
+  cardTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1b1b1d",
+    fontFamily: Platform.OS === "ios" ? "Noto Serif" : "serif",
+    marginBottom: 4,
+  },
+  cardSub: {
+    fontSize: 13,
+    color: "#45464d",
+    marginBottom: 24,
+  },
+  label: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#45464d",
+    letterSpacing: 2,
+    marginBottom: 8,
+  },
+  inputRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 20,
+  },
+  dialCode: {
+    height: 50,
+    paddingHorizontal: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f9f9f9",
+    borderWidth: 1,
+    borderColor: "#c6c6cd",
+    borderRadius: 10,
+  },
+  dialCodeText: {
+    fontSize: 16,
+    color: "#1b1b1d",
+    fontWeight: "600",
+  },
+  input: {
+    flex: 1,
+    height: 50,
+    backgroundColor: "#f9f9f9",
+    borderWidth: 1,
+    borderColor: "#c6c6cd",
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: "#1b1b1d",
+  },
+  inputFocused: {
+    borderColor: "#cba72f",
+    borderWidth: 1.5,
+    backgroundColor: "#ffffff",
+  },
+  cta: {
+    height: 52,
+    backgroundColor: "#131b2e",
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  ctaDisabled: {
+    backgroundColor: "#c6c6cd",
+  },
+  ctaText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#ffffff",
+    letterSpacing: 0.3,
+  },
+});
+
+// ── Mobile styles ─────────────────────────────────────────────────────────────
+const mob = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: "#0b1020",
@@ -283,8 +458,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "space-between",
   },
-
-  // Hero
   hero: {
     flex: 1,
     justifyContent: "center",
@@ -325,8 +498,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 0.2,
   },
-
-  // Card
   card: {
     marginHorizontal: 16,
     marginBottom: 28,
@@ -353,8 +524,6 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.45)",
     marginBottom: 24,
   },
-
-  // Field
   field: {
     marginBottom: 20,
   },
@@ -399,8 +568,6 @@ const styles = StyleSheet.create({
     borderColor: "#cba72f",
     backgroundColor: "rgba(255,255,255,0.09)",
   },
-
-  // CTA
   cta: {
     height: 54,
     backgroundColor: "#cba72f",
