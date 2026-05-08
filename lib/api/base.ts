@@ -1,10 +1,18 @@
 import { Platform } from 'react-native';
 
-const host = Platform.select({ android: '10.0.2.2', default: '192.168.29.108' });
+// The host where your Proxy/Gateway is running
+const host = Platform.select({
+    android: '10.0.2.2',
+    ios: '192.168.29.108',
+    default: 'localhost' });
+
+// The base URL of your API Gateway / Proxy
+// In production, this would be something like 'https://api.eventkart.com'
+const BASE_URL = process.env.API_URL ?? `http://${host}:8100`;
 
 export const SERVICE_URLS = {
-  user: process.env.EXPO_PUBLIC_USER_API_URL ?? `http://${host}:8081`,
-  vendor: process.env.EXPO_PUBLIC_VENDOR_API_URL ?? `http://${host}:8082`,
-  media: process.env.EXPO_PUBLIC_MEDIA_API_URL ?? `http://${host}:8083`,
-  invitation: process.env.EXPO_PUBLIC_INVITATION_API_URL ?? `http://${host}:8084`,
+  user: `${BASE_URL}/user`,
+  vendor: `${BASE_URL}/vendor`,
+  media: `${BASE_URL}/media`,
+  invitation: `${BASE_URL}/invitation`,
 };
