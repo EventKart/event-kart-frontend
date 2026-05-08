@@ -6,10 +6,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import PhoneInput from "react-native-phone-number-input";
 
+import { TopAppBar } from '@/components/ui/TopAppBar';
 import { requestPhoneOtp } from '@/lib/api/auth';
 import { SERVICE_URLS } from '@/lib/api/base';
 import { useAuthStore } from '@/store/authStore';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 function describeError(e: any): string {
   if (e?.response) {
@@ -79,11 +79,7 @@ export default function SignInScreen() {
         <StatusBar barStyle="dark-content" />
 
         <View style={styles.borderView}>
-            {/* TopAppBar */}
-            <View style={styles.header}>
-              <Text style={styles.headerTitle}>EventKart</Text>
-              <View style={styles.placeholder} />
-            </View>
+            <TopAppBar variant="dark" />
 
             <KeyboardAvoidingView
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -154,36 +150,6 @@ export default function SignInScreen() {
         },
         flexGrow: {
           flex: 1,
-        },
-        header: {
-          height: 64,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingHorizontal: 16,
-          backgroundColor: '#000000',
-          borderBottomWidth: 1,
-          borderBottomColor: '#e2e8f0', // border-slate-200/60
-          borderTopLeftRadius: 8,
-          borderTopRightRadius: 8,
-        },
-        headerTitle: {
-          fontSize: 30,
-          fontWeight: '600',
-          fontStyle: 'bold',
-          color: '#ffffff',
-          fontFamily: Platform.OS === 'ios' ? 'Noto Serif' : 'serif',
-        },
-        backButton: {
-          padding: 8,
-        },
-        iconText: {
-          fontFamily: 'Material Symbols Outlined', // Replace with icon library
-          fontSize: 24,
-          color: '#64748b',
-        },
-        placeholder: {
-          width: 40,
         },
         scrollContent: {
           flexGrow: 1,
