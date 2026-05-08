@@ -22,8 +22,11 @@ export type BokehConfig = {
 export function BokehCircle({ size, cx, cy, color, delay }: BokehConfig) {
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.9);
+  const tx = useSharedValue(0);
+  const ty = useSharedValue(0);
 
   useEffect(() => {
+    // Pulse opacity
     opacity.value = withDelay(
       delay,
       withRepeat(
@@ -35,6 +38,8 @@ export function BokehCircle({ size, cx, cy, color, delay }: BokehConfig) {
         true,
       ),
     );
+
+    // Pulse scale
     scale.value = withDelay(
       delay,
       withRepeat(
@@ -46,11 +51,40 @@ export function BokehCircle({ size, cx, cy, color, delay }: BokehConfig) {
         true,
       ),
     );
+
+    // Slow organic drift — each circle moves at a different phase
+    const drift = size * 0.1;
+    tx.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(drift, { duration: 5500 }),
+          withTiming(-drift * 0.7, { duration: 6500 }),
+        ),
+        -1,
+        true,
+      ),
+    );
+    ty.value = withDelay(
+      delay + 400,
+      withRepeat(
+        withSequence(
+          withTiming(drift * 0.8, { duration: 7000 }),
+          withTiming(-drift * 1.1, { duration: 5200 }),
+        ),
+        -1,
+        true,
+      ),
+    );
   }, []);
 
   const animStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
-    transform: [{ scale: scale.value }],
+    transform: [
+      { scale: scale.value },
+      { translateX: tx.value },
+      { translateY: ty.value },
+    ],
   }));
 
   return (
