@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -7,7 +7,6 @@ import {
   Text,
   TextInput,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,16 +17,17 @@ import Reanimated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { requestPhoneOtp } from '@/lib/api/auth';
 import { useAuthStore } from '@/store/authStore';
 import { useIsWide } from '@/hooks/useIsWide';
-import { auth, authStyles, bokeh } from '@/constants/authTheme';
+import { auth, authStyles } from '@/constants/authTheme';
 import { AuthBackground } from '@/components/auth/AuthBackground';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { describeError } from '@/lib/auth/alerts';
+import { useAuthBokeh } from '@/hooks/useAuthBokeh';
 
 export default function SignInScreen() {
   const router = useRouter();
   const setPendingPhone = useAuthStore((s) => s.setPendingPhone);
-  const { width: winW, height: winH } = useWindowDimensions();
   const isWide = useIsWide();
+  const { web: webCircles, mob: mobCircles } = useAuthBokeh('signIn');
 
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,23 +35,6 @@ export default function SignInScreen() {
 
   const digits = phone.replace(/\D/g, '');
   const canSubmit = digits.length >= 7;
-
-  const webCircles = useMemo(() => [
-    { size: winW * 0.32, cx: winW * 0.08, cy: winH * 0.15, color: bokeh.gold(0.22), delay: 0 },
-    { size: winW * 0.26, cx: winW * 0.92, cy: winH * 0.58, color: bokeh.gold(0.16), delay: 700 },
-    { size: winW * 0.20, cx: winW * 0.55, cy: winH * 0.07, color: bokeh.navy(0.45), delay: 300 },
-    { size: winW * 0.28, cx: winW * 0.28, cy: winH * 0.76, color: bokeh.deep(0.88), delay: 600 },
-    { size: winW * 0.18, cx: winW * 0.72, cy: winH * 0.84, color: bokeh.gold(0.14), delay: 1000 },
-  ], [winW, winH]);
-
-  const mobCircles = useMemo(() => [
-    { size: 340, cx: winW * 0.06 + 170, cy: 160,         color: bokeh.gold(0.22), delay: 0 },
-    { size: 240, cx: winW * 0.88 + 120, cy: 300,         color: bokeh.gold(0.16), delay: 800 },
-    { size: 180, cx: winW * 0.5,        cy: 60,          color: bokeh.navy(0.5),  delay: 300 },
-    { size: 300, cx: winW * 0.1 + 150,  cy: winH * 0.65, color: bokeh.deep(0.9),  delay: 600 },
-    { size: 220, cx: winW * 0.8 + 110,  cy: winH * 0.45, color: bokeh.gold(0.12), delay: 1200 },
-    { size: 140, cx: winW * 0.3,        cy: winH * 0.8,  color: bokeh.gold(0.18), delay: 500 },
-  ], [winW, winH]);
 
   const handleSendOtp = async () => {
     if (!canSubmit) {

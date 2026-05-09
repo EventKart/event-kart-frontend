@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,17 +17,18 @@ import Reanimated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { updateUser } from '@/lib/api/users';
 import { useAuthStore } from '@/store/authStore';
 import { useIsWide } from '@/hooks/useIsWide';
-import { auth, authStyles, bokeh } from '@/constants/authTheme';
+import { auth, authStyles } from '@/constants/authTheme';
 import { AuthBackground } from '@/components/auth/AuthBackground';
 import { AuthInput } from '@/components/auth/AuthInput';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { showAlert } from '@/lib/auth/alerts';
+import { useAuthBokeh } from '@/hooks/useAuthBokeh';
 import type { Role } from '@/types';
 
 export default function CreateProfileScreen() {
   const router = useRouter();
   const isWide = useIsWide();
-  const { width: winW, height: winH } = useWindowDimensions();
+  const { web: webCircles, mob: mobCircles } = useAuthBokeh('completeProfile');
 
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
@@ -44,22 +44,6 @@ export default function CreateProfileScreen() {
   const lastNameRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
   const addressRef = useRef<TextInput>(null);
-
-  const webCircles = useMemo(() => [
-    { size: winW * 0.28, cx: winW * 0.19, cy: winH * 0.24, color: bokeh.gold(0.2),   delay: 0 },
-    { size: winW * 0.22, cx: winW * 0.83, cy: winH * 0.16, color: bokeh.purple(0.25), delay: 600 },
-    { size: winW * 0.18, cx: winW * 0.64, cy: winH * 0.69, color: bokeh.gold(0.15),  delay: 1200 },
-    { size: winW * 0.24, cx: winW * 0.22, cy: winH * 0.77, color: bokeh.blue(0.2),   delay: 400 },
-    { size: winW * 0.16, cx: winW * 0.9,  cy: winH * 0.53, color: bokeh.gold(0.18),  delay: 900 },
-  ], [winW, winH]);
-
-  const mobCircles = useMemo(() => [
-    { size: 260, cx: 70,  cy: 210, color: bokeh.gold(0.22),   delay: 0 },
-    { size: 200, cx: 320, cy: 260, color: bokeh.purple(0.28), delay: 700 },
-    { size: 180, cx: 230, cy: 510, color: bokeh.gold(0.18),   delay: 1400 },
-    { size: 220, cx: 70,  cy: 670, color: bokeh.blue(0.22),   delay: 400 },
-    { size: 160, cx: 340, cy: 700, color: bokeh.gold(0.15),   delay: 1000 },
-  ], []);
 
   const valid = firstName.trim().length >= 1 && lastName.trim().length >= 1;
   const ctaLabel = submitting ? 'Saving…' : roleChoice === 'VENDOR' ? 'Continue to Vendor Setup' : 'Get Started';

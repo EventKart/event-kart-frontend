@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,11 +15,12 @@ import { requestPhoneOtp, verifyPhoneOtp } from '@/lib/api/auth';
 import { useAuthStore } from '@/store/authStore';
 import { isProfileComplete } from '@/types';
 import { useIsWide } from '@/hooks/useIsWide';
-import { auth, authStyles, bokeh } from '@/constants/authTheme';
+import { auth, authStyles } from '@/constants/authTheme';
 import { AuthBackground } from '@/components/auth/AuthBackground';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { OTPInput } from '@/components/auth/OTPInput';
 import { describeError, showAlert } from '@/lib/auth/alerts';
+import { useAuthBokeh } from '@/hooks/useAuthBokeh';
 
 export default function OtpVerifyScreen() {
   const router = useRouter();
@@ -28,24 +28,8 @@ export default function OtpVerifyScreen() {
   const phone = useAuthStore((s) => s.pendingPhone);
   const setToken = useAuthStore((s) => s.setToken);
   const setUser = useAuthStore((s) => s.setUser);
-  const { width: winW, height: winH } = useWindowDimensions();
   const isWide = useIsWide();
-
-  const webCircles = useMemo(() => [
-    { size: winW * 0.30, cx: winW * 0.9,  cy: winH * 0.15, color: bokeh.gold(0.2),  delay: 200 },
-    { size: winW * 0.24, cx: winW * 0.1,  cy: winH * 0.6,  color: bokeh.gold(0.15), delay: 900 },
-    { size: winW * 0.18, cx: winW * 0.5,  cy: winH * 0.06, color: bokeh.navy(0.45), delay: 400 },
-    { size: winW * 0.26, cx: winW * 0.72, cy: winH * 0.78, color: bokeh.deep(0.85), delay: 700 },
-    { size: winW * 0.16, cx: winW * 0.25, cy: winH * 0.88, color: bokeh.gold(0.13), delay: 1100 },
-  ], [winW, winH]);
-
-  const mobCircles = useMemo(() => [
-    { size: 280, cx: winW * 0.9,  cy: 120,          color: bokeh.gold(0.18), delay: 200 },
-    { size: 200, cx: winW * 0.1,  cy: 280,           color: bokeh.gold(0.14), delay: 1000 },
-    { size: 160, cx: winW * 0.5,  cy: winH * 0.15,  color: bokeh.navy(0.45), delay: 500 },
-    { size: 320, cx: winW * 0.85, cy: winH * 0.6,   color: bokeh.deep(0.85), delay: 700 },
-    { size: 180, cx: winW * 0.2,  cy: winH * 0.7,   color: bokeh.gold(0.15), delay: 300 },
-  ], [winW, winH]);
+  const { web: webCircles, mob: mobCircles } = useAuthBokeh('otpVerify');
 
   const [otp, setOtp] = useState(params.devOtp ?? '');
   const [seconds, setSeconds] = useState(60);
