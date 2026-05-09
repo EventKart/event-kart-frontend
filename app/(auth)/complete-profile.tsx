@@ -1,5 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -9,10 +10,10 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { TextInput } from 'react-native';
-import Reanimated, { FadeIn, FadeInUp } from 'react-native-reanimated';
+import Reanimated, { FadeIn, FadeInUp, FadeOut, LinearTransition } from 'react-native-reanimated';
 
 import { updateUser } from '@/lib/api/users';
 import { useAuthStore } from '@/store/authStore';
@@ -40,6 +41,16 @@ export default function CreateProfileScreen() {
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const { top } = useSafeAreaInsets();
+
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const onShow = Keyboard.addListener(showEvt, () => setKeyboardVisible(true));
+    const onHide = Keyboard.addListener(hideEvt, () => setKeyboardVisible(false));
+    return () => { onShow.remove(); onHide.remove(); };
+  }, []);
 
   const lastNameRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
@@ -192,6 +203,7 @@ export default function CreateProfileScreen() {
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
+          keyboardVerticalOffset={top}
         >
           <ScrollView
             contentContainerStyle={{ flexGrow: 1 }}
@@ -199,13 +211,17 @@ export default function CreateProfileScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <View style={mob.inner}>
-              <Reanimated.View entering={FadeIn.delay(80).duration(700)} style={mob.header}>
+              <Reanimated.View entering={FadeIn.delay(80).duration(700)} layout={LinearTransition.springify()} style={mob.header}>
                 <View style={mob.goldBar} />
-                <Text style={mob.title}>{'Create your\nprofile'}</Text>
-                <Text style={mob.subtitle}>Tell us about yourself to get started on EventKart.</Text>
+                {!keyboardVisible && (
+                  <Reanimated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(180)}>
+                    <Text style={mob.title}>{'Create your\nprofile'}</Text>
+                    <Text style={mob.subtitle}>Tell us about yourself to get started on EventKart.</Text>
+                  </Reanimated.View>
+                )}
               </Reanimated.View>
 
-              <Reanimated.View entering={FadeInUp.delay(240).duration(600)} style={mob.card}>
+              <Reanimated.View layout={LinearTransition.springify()} entering={FadeInUp.delay(240).duration(600)} style={mob.card}>
                 <RoleToggle value={roleChoice} onChange={setRoleChoice} />
 
                 <View style={mob.nameRow}>

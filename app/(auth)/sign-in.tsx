@@ -1,18 +1,25 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
   Text,
   TextInput,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { ArrowRight, Star } from 'lucide-react-native';
-import Reanimated, { FadeIn, FadeInUp } from 'react-native-reanimated';
+import Reanimated, {
+  FadeIn,
+  FadeInUp,
+  FadeOut,
+  LinearTransition,
+} from 'react-native-reanimated';
 
 import { requestPhoneOtp } from '@/lib/api/auth';
 import { useAuthStore } from '@/store/authStore';
@@ -32,6 +39,16 @@ export default function SignInScreen() {
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const { top } = useSafeAreaInsets();
+
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const onShow = Keyboard.addListener(showEvt, () => setKeyboardVisible(true));
+    const onHide = Keyboard.addListener(hideEvt, () => setKeyboardVisible(false));
+    return () => { onShow.remove(); onHide.remove(); };
+  }, []);
 
   const digits = phone.replace(/\D/g, '');
   const canSubmit = digits.length >= 7;
@@ -42,6 +59,7 @@ export default function SignInScreen() {
       else Alert.alert('Invalid number', 'Please enter a valid phone number.');
       return;
     }
+    Keyboard.dismiss();
     setLoading(true);
     try {
       const fullNumber = `+91${digits}`;
@@ -119,54 +137,67 @@ export default function SignInScreen() {
     >
       <StatusBar style="light" />
       <SafeAreaView style={{ flex: 1 }}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={mob.flex}
-        >
-          <Reanimated.View entering={FadeIn.delay(100).duration(900)} style={mob.hero}>
-            <View style={mob.badge}>
-              <Star size={9} color={auth.gold} fill={auth.gold} />
-              <Text style={mob.badgeText}>EVENTKART</Text>
-              <Star size={9} color={auth.gold} fill={auth.gold} />
-            </View>
-            <Text style={mob.heroTitle}>{'Where Events\nCome Alive'}</Text>
-            <Text style={mob.heroSub}>Seamlessly discover, book & manage events</Text>
-          </Reanimated.View>
-
-          <Reanimated.View entering={FadeInUp.delay(280).duration(650)} style={mob.card}>
-            <Text style={mob.cardTitle}>Sign In</Text>
-            <Text style={mob.cardSubtitle}>Enter your phone number to continue</Text>
-
-            <View style={mob.field}>
-              <Text style={mob.fieldLabel}>PHONE NUMBER</Text>
-              <View style={mob.inputRow}>
-                <View style={mob.dialCode}>
-                  <Text style={mob.dialCodeText}>+91</Text>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={{ flex: 1 }}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={mob.flex}
+              keyboardVerticalOffset={top}
+            >
+              <Reanimated.View entering={FadeIn.delay(100).duration(900)} layout={LinearTransition.springify()} style={mob.hero}>
+                <View style={mob.badge}>
+                  <Star size={9} color={auth.gold} fill={auth.gold} />
+                  <Text style={mob.badgeText}>EVENTKART</Text>
+                  <Star size={9} color={auth.gold} fill={auth.gold} />
                 </View>
-                <TextInput
-                  style={[mob.input, focused && mob.inputFocused]}
-                  placeholder="000 0000000"
-                  placeholderTextColor="rgba(255,255,255,0.25)"
-                  keyboardType="phone-pad"
-                  value={phone}
-                  onChangeText={setPhone}
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
-                  selectionColor={auth.gold}
-                />
-              </View>
-            </View>
+                {!keyboardVisible && (
+                  <Reanimated.View
+                    entering={FadeIn.duration(300)}
+                    exiting={FadeOut.duration(180)}
+                    style={{ alignItems: 'center' }}
+                  >
+                    <Text style={mob.heroTitle}>{'Where Events\nCome Alive'}</Text>
+                    <Text style={mob.heroSub}>Seamlessly discover, book & manage events</Text>
+                  </Reanimated.View>
+                )}
+              </Reanimated.View>
 
-            <AuthButton
-              label={loading ? 'Sending…' : 'Send Verification Code'}
-              onPress={handleSendOtp}
-              variant="gold"
-              disabled={!canSubmit}
-              loading={loading}
-              iconRight={!loading ? <ArrowRight size={18} color={auth.navy} /> : undefined}
-            />
-          </Reanimated.View>
-        </KeyboardAvoidingView>
+              <Reanimated.View layout={LinearTransition.springify()} entering={FadeInUp.delay(280).duration(650)} style={mob.card}>
+                <Text style={mob.cardTitle}>Sign In</Text>
+                <Text style={mob.cardSubtitle}>Enter your phone number to continue</Text>
+
+                <View style={mob.field}>
+                  <Text style={mob.fieldLabel}>PHONE NUMBER</Text>
+                  <View style={mob.inputRow}>
+                    <View style={mob.dialCode}>
+                      <Text style={mob.dialCodeText}>+91</Text>
+                    </View>
+                    <TextInput
+                      style={[mob.input, focused && mob.inputFocused]}
+                      placeholder="000 0000000"
+                      placeholderTextColor="rgba(255,255,255,0.25)"
+                      keyboardType="phone-pad"
+                      value={phone}
+                      onChangeText={setPhone}
+                      onFocus={() => setFocused(true)}
+                      onBlur={() => setFocused(false)}
+                      selectionColor={auth.gold}
+                    />
+                  </View>
+                </View>
+
+                <AuthButton
+                  label={loading ? 'Sending…' : 'Send Verification Code'}
+                  onPress={handleSendOtp}
+                  variant="gold"
+                  disabled={!canSubmit}
+                  loading={loading}
+                  iconRight={!loading ? <ArrowRight size={18} color={auth.navy} /> : undefined}
+                />
+              </Reanimated.View>
+            </KeyboardAvoidingView>
+          </View>
+        </TouchableWithoutFeedback>
       </SafeAreaView>
     </AuthBackground>
   );

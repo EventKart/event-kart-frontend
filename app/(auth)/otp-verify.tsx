@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
 import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { ChevronLeft, ShieldCheck } from 'lucide-react-native';
-import Reanimated, { FadeIn, FadeInUp } from 'react-native-reanimated';
+import Reanimated, { FadeIn, FadeInUp, FadeOut, LinearTransition } from 'react-native-reanimated';
 
 import { requestPhoneOtp, verifyPhoneOtp } from '@/lib/api/auth';
 import { useAuthStore } from '@/store/authStore';
@@ -35,10 +39,20 @@ export default function OtpVerifyScreen() {
   const [seconds, setSeconds] = useState(60);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const { top } = useSafeAreaInsets();
 
   useEffect(() => {
     if (!phone) router.replace('/(auth)/sign-in');
   }, [phone, router]);
+
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const onShow = Keyboard.addListener(showEvt, () => setKeyboardVisible(true));
+    const onHide = Keyboard.addListener(hideEvt, () => setKeyboardVisible(false));
+    return () => { onShow.remove(); onHide.remove(); };
+  }, []);
 
   useEffect(() => {
     if (seconds <= 0) return;
@@ -147,37 +161,49 @@ export default function OtpVerifyScreen() {
     >
       <StatusBar style="light" />
       <SafeAreaView style={{ flex: 1 }}>
-        <View style={mob.inner}>
-          <Reanimated.View entering={FadeIn.delay(50).duration(600)} style={mob.topBar}>
-            <TouchableOpacity onPress={() => router.back()} style={mob.backBtn} activeOpacity={0.7}>
-              <ChevronLeft size={20} color="rgba(255,255,255,0.7)" />
-              <Text style={mob.backText}>Back</Text>
-            </TouchableOpacity>
-          </Reanimated.View>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={{ flex: 1 }}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={mob.inner}
+              keyboardVerticalOffset={top}
+            >
+              <Reanimated.View entering={FadeIn.delay(50).duration(600)} style={mob.topBar}>
+                <TouchableOpacity onPress={() => router.back()} style={mob.backBtn} activeOpacity={0.7}>
+                  <ChevronLeft size={20} color="rgba(255,255,255,0.7)" />
+                  <Text style={mob.backText}>Back</Text>
+                </TouchableOpacity>
+              </Reanimated.View>
 
-          <Reanimated.View entering={FadeIn.delay(100).duration(900)} style={mob.hero}>
-            <View style={mob.iconRing}>
-              <ShieldCheck size={28} color={auth.gold} strokeWidth={1.5} />
-            </View>
-            <Text style={mob.heroTitle}>{'Check your\nphone'}</Text>
-            <Text style={mob.heroSub}>
-              {'We sent a 6-digit code to\n'}
-              <Text style={mob.heroPhone}>{masked}</Text>
-            </Text>
-          </Reanimated.View>
+              <Reanimated.View entering={FadeIn.delay(100).duration(900)} layout={LinearTransition.springify()} style={mob.hero}>
+                <View style={mob.iconRing}>
+                  <ShieldCheck size={28} color={auth.gold} strokeWidth={1.5} />
+                </View>
+                {!keyboardVisible && (
+                  <Reanimated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(180)} style={{ alignItems: 'center' }}>
+                    <Text style={mob.heroTitle}>{'Check your\nphone'}</Text>
+                    <Text style={mob.heroSub}>
+                      {'We sent a 6-digit code to\n'}
+                      <Text style={mob.heroPhone}>{masked}</Text>
+                    </Text>
+                  </Reanimated.View>
+                )}
+              </Reanimated.View>
 
-          <Reanimated.View entering={FadeInUp.delay(280).duration(650)} style={mob.card}>
-            <OTPInput value={otp} onChange={setOtp} theme="dark" />
-            <AuthButton
-              label={loading ? 'Verifying…' : 'Verify & Continue'}
-              onPress={handleVerify}
-              variant="gold"
-              loading={loading}
-            />
-            <ResendRow seconds={seconds} resending={resending} onResend={handleResend} />
-            {params.devOtp && <DevBanner otp={params.devOtp} />}
-          </Reanimated.View>
-        </View>
+              <Reanimated.View layout={LinearTransition.springify()} entering={FadeInUp.delay(280).duration(650)} style={mob.card}>
+                <OTPInput value={otp} onChange={setOtp} theme="dark" />
+                <AuthButton
+                  label={loading ? 'Verifying…' : 'Verify & Continue'}
+                  onPress={handleVerify}
+                  variant="gold"
+                  loading={loading}
+                />
+                <ResendRow seconds={seconds} resending={resending} onResend={handleResend} />
+                {params.devOtp && <DevBanner otp={params.devOtp} />}
+              </Reanimated.View>
+            </KeyboardAvoidingView>
+          </View>
+        </TouchableWithoutFeedback>
       </SafeAreaView>
     </AuthBackground>
   );
