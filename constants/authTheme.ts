@@ -49,6 +49,18 @@ export const authStyles = StyleSheet.create({
     shadowRadius: 40,
     elevation: 20,
   },
+  lightMobileCard: {
+    padding: 24,
+    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e8e8ed',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
 
   // ── Web centered column ───────────────────────────────────────────────────
   webCentered: {
@@ -60,3 +72,27 @@ export const authStyles = StyleSheet.create({
     gap: 32,
   },
 });
+
+/** Returns color + style tokens for the mobile card based on system color scheme. */
+export function mobileCardTheme(isDark: boolean) {
+  return {
+    // card
+    card: isDark ? authStyles.darkCard : authStyles.lightMobileCard,
+    title: isDark ? '#ffffff' : '#1b1b1d',
+    subtitle: isDark ? 'rgba(255,255,255,0.45)' : '#45464d',
+    label: isDark ? auth.gold : '#45464d',
+    // inputs
+    inputBg: isDark ? 'rgba(255,255,255,0.06)' : '#f9f9f9',
+    inputBorder: isDark ? 'rgba(255,255,255,0.1)' : '#c6c6cd',
+    inputText: isDark ? '#ffffff' : '#1b1b1d',
+    placeholder: isDark ? 'rgba(255,255,255,0.25)' : '#c6c6cd',
+    focusedBg: isDark ? 'rgba(255,255,255,0.09)' : '#ffffff',
+    inputTheme: (isDark ? 'dark' : 'light') as 'dark' | 'light',
+    // hero / background
+    heroTitle: isDark ? '#ffffff' : auth.navy,
+    heroSubtitle: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(19,27,46,0.55)',
+    backBtn: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(19,27,46,0.6)',
+    badgeColor: isDark ? auth.gold : auth.navy,
+    statusBar: (isDark ? 'light' : 'dark') as 'light' | 'dark',
+  };
+}

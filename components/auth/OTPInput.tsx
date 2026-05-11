@@ -8,9 +8,10 @@ interface Props {
   /** 'dark' = mobile glass card; 'light' = web white card. */
   theme: 'dark' | 'light';
   length?: number;
+  autoFocus?: boolean;
 }
 
-export function OTPInput({ value, onChange, theme, length = 6 }: Props) {
+export function OTPInput({ value, onChange, theme, length = 6, autoFocus = false }: Props) {
   const inputs = useRef<Array<TextInput | null>>([]);
   const [slots, setSlots] = useState<string[]>(() =>
     Array.from({ length }, (_, i) => value[i] ?? ''),
@@ -22,7 +23,7 @@ export function OTPInput({ value, onChange, theme, length = 6 }: Props) {
   }, [value, length]);
 
   useEffect(() => {
-    setTimeout(() => inputs.current[0]?.focus(), 100);
+    if (autoFocus) setTimeout(() => inputs.current[0]?.focus(), 100);
   }, []);
 
   const commit = (next: string[]) => {

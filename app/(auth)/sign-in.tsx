@@ -9,6 +9,7 @@ import {
   TextInput,
   TouchableWithoutFeedback,
   View,
+  useColorScheme,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,7 +25,7 @@ import Reanimated, {
 import { requestPhoneOtp } from '@/lib/api/auth';
 import { useAuthStore } from '@/store/authStore';
 import { useIsWide } from '@/hooks/useIsWide';
-import { auth, authStyles } from '@/constants/authTheme';
+import { auth, authStyles, mobileCardTheme } from '@/constants/authTheme';
 import { AuthBackground } from '@/components/auth/AuthBackground';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { describeError } from '@/lib/auth/alerts';
@@ -41,6 +42,8 @@ export default function SignInScreen() {
   const [focused, setFocused] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const { top } = useSafeAreaInsets();
+  const isDark = useColorScheme() !== 'light';
+  const mt = mobileCardTheme(isDark);
 
   useEffect(() => {
     const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -134,8 +137,9 @@ export default function SignInScreen() {
   return (
     <AuthBackground
       circles={mobCircles}
+      isDark={isDark}
     >
-      <StatusBar style="light" />
+      <StatusBar style={mt.statusBar} />
       <SafeAreaView style={{ flex: 1 }}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <View style={{ flex: 1 }}>
@@ -146,9 +150,9 @@ export default function SignInScreen() {
             >
               <Reanimated.View entering={FadeIn.delay(100).duration(900)} layout={LinearTransition.springify()} style={mob.hero}>
                 <View style={mob.badge}>
-                  <Star size={9} color={auth.gold} fill={auth.gold} />
-                  <Text style={mob.badgeText}>EVENTKART</Text>
-                  <Star size={9} color={auth.gold} fill={auth.gold} />
+                  <Star size={11} color={mt.badgeColor} fill={mt.badgeColor} />
+                  <Text style={[mob.badgeText, { color: mt.badgeColor }]}>EVENTKART</Text>
+                  <Star size={11} color={mt.badgeColor} fill={mt.badgeColor} />
                 </View>
                 {!keyboardVisible && (
                   <Reanimated.View
@@ -156,26 +160,30 @@ export default function SignInScreen() {
                     exiting={FadeOut.duration(180)}
                     style={{ alignItems: 'center' }}
                   >
-                    <Text style={mob.heroTitle}>{'Where Events\nCome Alive'}</Text>
-                    <Text style={mob.heroSub}>Seamlessly discover, book & manage events</Text>
+                    <Text style={[mob.heroTitle, { color: mt.heroTitle }]}>{'Where Events\nCome Alive'}</Text>
+                    <Text style={[mob.heroSub, { color: mt.heroSubtitle }]}>Seamlessly discover, book & manage events</Text>
                   </Reanimated.View>
                 )}
               </Reanimated.View>
 
-              <Reanimated.View layout={LinearTransition.springify()} entering={FadeInUp.delay(280).duration(650)} style={mob.card}>
-                <Text style={mob.cardTitle}>Sign In</Text>
-                <Text style={mob.cardSubtitle}>Enter your phone number to continue</Text>
+              <Reanimated.View layout={LinearTransition.springify()} entering={FadeInUp.delay(280).duration(650)} style={[mt.card, mob.card]}>
+                <Text style={[mob.cardTitle, { color: mt.title }]}>Sign In</Text>
+                <Text style={[mob.cardSubtitle, { color: mt.subtitle }]}>Enter your phone number to continue</Text>
 
                 <View style={mob.field}>
-                  <Text style={mob.fieldLabel}>PHONE NUMBER</Text>
+                  <Text style={[mob.fieldLabel, { color: mt.label }]}>PHONE NUMBER</Text>
                   <View style={mob.inputRow}>
-                    <View style={mob.dialCode}>
-                      <Text style={mob.dialCodeText}>+91</Text>
+                    <View style={[mob.dialCode, { backgroundColor: mt.inputBg, borderColor: mt.inputBorder }]}>
+                      <Text style={[mob.dialCodeText, { color: mt.inputText }]}>+91</Text>
                     </View>
                     <TextInput
-                      style={[mob.input, focused && mob.inputFocused]}
+                      style={[
+                        mob.input,
+                        { backgroundColor: mt.inputBg, borderColor: mt.inputBorder, color: mt.inputText },
+                        focused && { borderColor: auth.gold, backgroundColor: mt.focusedBg },
+                      ]}
                       placeholder="000 0000000"
-                      placeholderTextColor="rgba(255,255,255,0.25)"
+                      placeholderTextColor={mt.placeholder}
                       keyboardType="phone-pad"
                       value={phone}
                       onChangeText={setPhone}
@@ -270,16 +278,16 @@ const mob = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    backgroundColor: 'rgba(203,167,47,0.1)',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
+    gap: 8,
+    backgroundColor: 'rgba(203,167,47,0.18)',
+    paddingVertical: 8,
+    paddingHorizontal: 18,
     borderRadius: 100,
-    borderWidth: 1,
-    borderColor: 'rgba(203,167,47,0.3)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(203,167,47,0.55)',
     marginBottom: 22,
   },
-  badgeText: { fontSize: 11, color: auth.gold, letterSpacing: 2.5, fontWeight: '700' },
+  badgeText: { fontSize: 13, fontFamily: auth.fontSemiBold, letterSpacing: 3 },
   heroTitle: {
     fontSize: 44,
     fontFamily: auth.fontSerif,
@@ -290,7 +298,6 @@ const mob = StyleSheet.create({
   },
   heroSub: { fontSize: 14, color: 'rgba(255,255,255,0.45)', textAlign: 'center', letterSpacing: 0.2 },
   card: {
-    ...authStyles.darkCard,
     marginHorizontal: 16,
     marginBottom: 28,
   },

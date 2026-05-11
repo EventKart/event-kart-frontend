@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useColorScheme,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,7 +19,7 @@ import Reanimated, { FadeIn, FadeInUp, FadeOut, LinearTransition } from 'react-n
 import { updateUser } from '@/lib/api/users';
 import { useAuthStore } from '@/store/authStore';
 import { useIsWide } from '@/hooks/useIsWide';
-import { auth, authStyles } from '@/constants/authTheme';
+import { auth, authStyles, mobileCardTheme } from '@/constants/authTheme';
 import { AuthBackground } from '@/components/auth/AuthBackground';
 import { AuthInput } from '@/components/auth/AuthInput';
 import { AuthButton } from '@/components/auth/AuthButton';
@@ -43,6 +44,8 @@ export default function CreateProfileScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const { top } = useSafeAreaInsets();
+  const isDark = useColorScheme() !== 'light';
+  const mt = mobileCardTheme(isDark);
 
   useEffect(() => {
     const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -134,7 +137,6 @@ export default function CreateProfileScreen() {
                 autoCapitalize="words"
                 returnKeyType="next"
                 onSubmitEditing={() => lastNameRef.current?.focus()}
-                autoFocus
                 containerStyle={{ flex: 1 }}
               />
               <AuthInput
@@ -197,8 +199,9 @@ export default function CreateProfileScreen() {
   return (
     <AuthBackground
       circles={mobCircles}
+      isDark={isDark}
     >
-      <StatusBar style="light" />
+      <StatusBar style={mt.statusBar} />
       <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -215,32 +218,31 @@ export default function CreateProfileScreen() {
                 <View style={mob.goldBar} />
                 {!keyboardVisible && (
                   <Reanimated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(180)}>
-                    <Text style={mob.title}>{'Create your\nprofile'}</Text>
-                    <Text style={mob.subtitle}>Tell us about yourself to get started on EventKart.</Text>
+                    <Text style={[mob.title, { color: mt.heroTitle }]}>{'Create your\nprofile'}</Text>
+                    <Text style={[mob.subtitle, { color: mt.heroSubtitle }]}>Tell us about yourself to get started on EventKart.</Text>
                   </Reanimated.View>
                 )}
               </Reanimated.View>
 
-              <Reanimated.View layout={LinearTransition.springify()} entering={FadeInUp.delay(240).duration(600)} style={mob.card}>
-                <RoleToggle value={roleChoice} onChange={setRoleChoice} />
+              <Reanimated.View layout={LinearTransition.springify()} entering={FadeInUp.delay(240).duration(600)} style={[mt.card, mob.card]}>
+                <RoleToggle value={roleChoice} onChange={setRoleChoice} light={!isDark} />
 
                 <View style={mob.nameRow}>
                   <AuthInput
                     label="First Name"
-                    theme="dark"
+                    theme={mt.inputTheme}
                     placeholder="Sarah"
                     value={firstName}
                     onChangeText={setFirstName}
                     autoCapitalize="words"
                     returnKeyType="next"
                     onSubmitEditing={() => lastNameRef.current?.focus()}
-                    autoFocus
                     containerStyle={{ flex: 1 }}
                   />
                   <AuthInput
                     ref={lastNameRef}
                     label="Last Name"
-                    theme="dark"
+                    theme={mt.inputTheme}
                     placeholder="Jenkins"
                     value={lastName}
                     onChangeText={setLastName}
@@ -254,7 +256,7 @@ export default function CreateProfileScreen() {
                 <AuthInput
                   ref={emailRef}
                   label="Email (optional)"
-                  theme="dark"
+                  theme={mt.inputTheme}
                   placeholder="you@example.com"
                   value={email}
                   onChangeText={setEmail}
@@ -268,7 +270,7 @@ export default function CreateProfileScreen() {
                 <AuthInput
                   ref={addressRef}
                   label="City / Address"
-                  theme="dark"
+                  theme={mt.inputTheme}
                   placeholder="Bengaluru, Karnataka"
                   value={address}
                   onChangeText={setAddress}
@@ -277,7 +279,7 @@ export default function CreateProfileScreen() {
                   onSubmitEditing={handleSubmit}
                 />
 
-                {roleChoice === 'VENDOR' && <VendorHint />}
+                {roleChoice === 'VENDOR' && <VendorHint light={!isDark} />}
 
                 <AuthButton
                   label={ctaLabel}
@@ -364,7 +366,7 @@ const mob = StyleSheet.create({
   goldBar: { width: 36, height: 4, borderRadius: 2, backgroundColor: auth.gold, marginBottom: 4 },
   title: { fontFamily: auth.fontSerif, fontSize: 34, lineHeight: 42, color: '#ffffff', letterSpacing: 0.2 },
   subtitle: { fontFamily: auth.fontRegular, fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 22, marginTop: 4 },
-  card: { ...authStyles.darkCard, gap: 16 },
+  card: { gap: 16 },
   nameRow: { flexDirection: 'row', gap: 12 },
 });
 

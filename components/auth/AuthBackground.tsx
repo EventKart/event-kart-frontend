@@ -9,6 +9,10 @@ interface Props {
   children: ReactNode;
   /** Use position:fixed full-viewport layout for web. Default: flex:1 for mobile. */
   variant?: 'mobile' | 'web';
+  /** Controls background colour and blur tint for the mobile variant. Web is always dark. */
+  isDark?: boolean;
+  /** Enable or disable bokeh circle animations. Default: true. */
+  animated?: boolean;
 }
 
 /**
@@ -19,15 +23,20 @@ export const AuthBackground = memo(function AuthBackground({
   circles,
   children,
   variant = 'mobile',
+  isDark = true,
+  animated = false,
 }: Props) {
+  const bg = variant === 'mobile' && !isDark ? '#fcf8fa' : auth.darkBg;
+  const tint = variant === 'mobile' && !isDark ? 'light' : 'dark';
+
   return (
-    <View style={variant === 'web' ? styles.web : styles.mobile}>
-      {circles.map((c, i) => (
+    <View style={[variant === 'web' ? styles.web : styles.mobile, { backgroundColor: bg }]}>
+      {animated && circles.map((c, i) => (
         <BokehCircle key={i} {...c} />
       ))}
       <BlurView
         intensity={variant === 'web' ? 60 : 55}
-        tint="dark"
+        tint={tint}
         style={StyleSheet.absoluteFill}
       />
       {children}
@@ -38,7 +47,6 @@ export const AuthBackground = memo(function AuthBackground({
 const styles = StyleSheet.create({
   mobile: {
     flex: 1,
-    backgroundColor: auth.darkBg,
   },
   web: {
     position: 'fixed' as any,

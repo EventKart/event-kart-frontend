@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
+  useColorScheme,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,7 +20,7 @@ import { requestPhoneOtp, verifyPhoneOtp } from '@/lib/api/auth';
 import { useAuthStore } from '@/store/authStore';
 import { isProfileComplete } from '@/types';
 import { useIsWide } from '@/hooks/useIsWide';
-import { auth, authStyles } from '@/constants/authTheme';
+import { auth, authStyles, mobileCardTheme } from '@/constants/authTheme';
 import { AuthBackground } from '@/components/auth/AuthBackground';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { OTPInput } from '@/components/auth/OTPInput';
@@ -41,6 +42,8 @@ export default function OtpVerifyScreen() {
   const [resending, setResending] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const { top } = useSafeAreaInsets();
+  const isDark = useColorScheme() !== 'light';
+  const mt = mobileCardTheme(isDark);
 
   useEffect(() => {
     if (!phone) router.replace('/(auth)/sign-in');
@@ -158,8 +161,9 @@ export default function OtpVerifyScreen() {
   return (
     <AuthBackground
       circles={mobCircles}
+      isDark={isDark}
     >
-      <StatusBar style="light" />
+      <StatusBar style={mt.statusBar} />
       <SafeAreaView style={{ flex: 1 }}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <View style={{ flex: 1 }}>
@@ -170,8 +174,8 @@ export default function OtpVerifyScreen() {
             >
               <Reanimated.View entering={FadeIn.delay(50).duration(600)} style={mob.topBar}>
                 <TouchableOpacity onPress={() => router.back()} style={mob.backBtn} activeOpacity={0.7}>
-                  <ChevronLeft size={20} color="rgba(255,255,255,0.7)" />
-                  <Text style={mob.backText}>Back</Text>
+                  <ChevronLeft size={20} color={mt.backBtn} />
+                  <Text style={[mob.backText, { color: mt.backBtn }]}>Back</Text>
                 </TouchableOpacity>
               </Reanimated.View>
 
@@ -181,8 +185,8 @@ export default function OtpVerifyScreen() {
                 </View>
                 {!keyboardVisible && (
                   <Reanimated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(180)} style={{ alignItems: 'center' }}>
-                    <Text style={mob.heroTitle}>{'Check your\nphone'}</Text>
-                    <Text style={mob.heroSub}>
+                    <Text style={[mob.heroTitle, { color: mt.heroTitle }]}>{'Check your\nphone'}</Text>
+                    <Text style={[mob.heroSub, { color: mt.heroSubtitle }]}>
                       {'We sent a 6-digit code to\n'}
                       <Text style={mob.heroPhone}>{masked}</Text>
                     </Text>
@@ -190,16 +194,16 @@ export default function OtpVerifyScreen() {
                 )}
               </Reanimated.View>
 
-              <Reanimated.View layout={LinearTransition.springify()} entering={FadeInUp.delay(280).duration(650)} style={mob.card}>
-                <OTPInput value={otp} onChange={setOtp} theme="dark" />
+              <Reanimated.View layout={LinearTransition.springify()} entering={FadeInUp.delay(280).duration(650)} style={[mt.card, mob.card]}>
+                <OTPInput value={otp} onChange={setOtp} theme={mt.inputTheme} />
                 <AuthButton
                   label={loading ? 'Verifying…' : 'Verify & Continue'}
                   onPress={handleVerify}
                   variant="gold"
                   loading={loading}
                 />
-                <ResendRow seconds={seconds} resending={resending} onResend={handleResend} />
-                {params.devOtp && <DevBanner otp={params.devOtp} />}
+                <ResendRow seconds={seconds} resending={resending} onResend={handleResend} light={!isDark} />
+                {params.devOtp && <DevBanner otp={params.devOtp} light={!isDark} />}
               </Reanimated.View>
             </KeyboardAvoidingView>
           </View>
@@ -315,7 +319,6 @@ const mob = StyleSheet.create({
   heroSub: { fontSize: 14, color: 'rgba(255,255,255,0.45)', textAlign: 'center', lineHeight: 22 },
   heroPhone: { color: auth.gold, fontWeight: '600' },
   card: {
-    ...authStyles.darkCard,
     marginHorizontal: 16,
     marginBottom: 28,
   },
