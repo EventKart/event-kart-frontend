@@ -93,7 +93,7 @@ export default function SignInScreen() {
               <Text style={web.badgeText}>EVENTKART</Text>
               <Star size={9} color={auth.gold} fill={auth.gold} />
             </View>
-            <Text style={web.heroTitle}>{'Where Events\nCome Alive'}</Text>
+            <Text style={web.heroTitle}>Less planning,{'\n'}more living.</Text>
             <Text style={web.heroSub}>Seamlessly discover, book & manage events</Text>
           </Reanimated.View>
 
@@ -160,7 +160,7 @@ export default function SignInScreen() {
                     exiting={FadeOut.duration(180)}
                     style={{ alignItems: 'center' }}
                   >
-                    <Text style={[mob.heroTitle, { color: mt.heroTitle }]}>{'Where Events\nCome Alive'}</Text>
+                    <Text style={[mob.heroTitle, { color: mt.heroTitle }]}>Less planning,{'\n'}more living.</Text>
                     <Text style={[mob.heroSub, { color: mt.heroSubtitle }]}>Seamlessly discover, book & manage events</Text>
                   </Reanimated.View>
                 )}
