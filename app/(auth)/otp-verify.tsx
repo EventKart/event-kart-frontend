@@ -1,104 +1,31 @@
-import { useEffect, useRef, useState } from 'react';
-import { Alert, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+  useColorScheme,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { ChevronLeft, ShieldCheck } from 'lucide-react-native';
+import Reanimated, { FadeIn, FadeInUp, FadeOut, LinearTransition } from 'react-native-reanimated';
 
-import { TopAppBar } from '@/components/ui/TopAppBar';
 import { requestPhoneOtp, verifyPhoneOtp } from '@/lib/api/auth';
-import { SERVICE_URLS } from '@/lib/api/base';
 import { useAuthStore } from '@/store/authStore';
 import { isProfileComplete } from '@/types';
-
-function describeError(e: any): string {
-  if (e?.response) {
-    const status = e.response.status;
-    const data = e.response.data;
-    const detail = typeof data === 'string' ? data : data?.message ?? data?.error;
-    return `Server returned ${status}${detail ? ` — ${detail}` : ''}.`;
-  }
-  if (e?.message?.includes('Network Error')) {
-    return `Could not reach ${SERVICE_URLS.user}. Check that the user-management service is running and reachable from this device.`;
-  }
-  return e?.message ?? 'Unknown error.';
-}
-
-function showError(title: string, message: string) {
-  if (Platform.OS === 'web') {
-    window.alert(`${title}\n\n${message}`);
-    return;
-  }
-  Alert.alert(title, message);
-}
-
-function OTPBoxes({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const LENGTH = 6;
-  const inputs = useRef<Array<TextInput | null>>([]);
-  const [slots, setSlots] = useState<string[]>(() =>
-    Array.from({ length: LENGTH }, (_, i) => value[i] ?? ''),
-  );
-
-  useEffect(() => {
-    const expected = Array.from({ length: LENGTH }, (_, i) => value[i] ?? '');
-    setSlots((prev) => (prev.join('') === expected.join('') ? prev : expected));
-  }, [value]);
-
-  useEffect(() => {
-    setTimeout(() => inputs.current[0]?.focus(), 100);
-  }, []);
-
-  const commit = (next: string[]) => {
-    setSlots(next);
-    onChange(next.join(''));
-  };
-
-  const handleChange = (idx: number, text: string) => {
-    const digits = text.replace(/\D/g, '');
-    if (digits.length > 1) {
-      const next = [...slots];
-      let pos = idx;
-      for (const d of digits) {
-        if (pos >= LENGTH) break;
-        next[pos++] = d;
-      }
-      commit(next);
-      inputs.current[Math.min(pos, LENGTH - 1)]?.focus();
-      return;
-    }
-    const ch = digits.slice(-1);
-    const next = [...slots];
-    next[idx] = ch;
-    commit(next);
-    if (ch && idx < LENGTH - 1) inputs.current[idx + 1]?.focus();
-  };
-
-  return (
-    <View style={styles.otpRow}>
-      {slots.map((char, idx) => (
-        <View key={idx} style={styles.otpCell}>
-          <TextInput
-            ref={(el) => { inputs.current[idx] = el; }}
-            value={char}
-            onChangeText={(t) => handleChange(idx, t)}
-            onKeyPress={({ nativeEvent }) => {
-              if (nativeEvent.key === 'Backspace' && !char && idx > 0) {
-                inputs.current[idx - 1]?.focus();
-              }
-            }}
-            keyboardType="number-pad"
-            maxLength={Platform.OS === 'web' ? undefined : 1}
-            style={[
-              styles.otpInput,
-              char ? styles.otpInputFilled : styles.otpInputEmpty,
-              Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined,
-            ]}
-          />
-          {idx === 2 && <View style={styles.otpSeparator} />}
-        </View>
-      ))}
-    </View>
-  );
-}
+import { useIsWide } from '@/hooks/useIsWide';
+import { auth, authStyles, mobileCardTheme } from '@/constants/authTheme';
+import { AuthBackground } from '@/components/auth/AuthBackground';
+import { AuthButton } from '@/components/auth/AuthButton';
+import { OTPInput } from '@/components/auth/OTPInput';
+import { describeError, showAlert } from '@/lib/auth/alerts';
+import { useAuthBokeh } from '@/hooks/useAuthBokeh';
 
 export default function OtpVerifyScreen() {
   const router = useRouter();
@@ -106,15 +33,29 @@ export default function OtpVerifyScreen() {
   const phone = useAuthStore((s) => s.pendingPhone);
   const setToken = useAuthStore((s) => s.setToken);
   const setUser = useAuthStore((s) => s.setUser);
+  const isWide = useIsWide();
+  const { web: webCircles, mob: mobCircles } = useAuthBokeh('otpVerify');
 
   const [otp, setOtp] = useState(params.devOtp ?? '');
   const [seconds, setSeconds] = useState(60);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const { top } = useSafeAreaInsets();
+  const isDark = useColorScheme() !== 'light';
+  const mt = mobileCardTheme(isDark);
 
   useEffect(() => {
     if (!phone) router.replace('/(auth)/sign-in');
   }, [phone, router]);
+
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const onShow = Keyboard.addListener(showEvt, () => setKeyboardVisible(true));
+    const onHide = Keyboard.addListener(hideEvt, () => setKeyboardVisible(false));
+    return () => { onShow.remove(); onHide.remove(); };
+  }, []);
 
   useEffect(() => {
     if (seconds <= 0) return;
@@ -125,7 +66,7 @@ export default function OtpVerifyScreen() {
   const handleVerify = async () => {
     if (!phone) return;
     if (otp.length !== 6) {
-      showError('Invalid code', 'Please enter the 6-digit OTP.');
+      showAlert('Invalid code', 'Please enter the 6-digit OTP.');
       return;
     }
     setLoading(true);
@@ -136,7 +77,7 @@ export default function OtpVerifyScreen() {
     } catch (e: any) {
       if (__DEV__) console.warn('[auth] verify-otp failed', e?.response?.data ?? e?.message);
       setLoading(false);
-      showError('Could not verify', describeError(e));
+      showAlert('Could not verify', describeError(e));
       return;
     }
     setToken(res.token);
@@ -160,210 +101,255 @@ export default function OtpVerifyScreen() {
       if (res.devOtp) setOtp(res.devOtp);
       setSeconds(60);
     } catch (e: any) {
-      showError('Could not resend', describeError(e));
+      showAlert('Could not resend', describeError(e));
     } finally {
       setResending(false);
     }
   };
 
   const masked =
-    phone && phone.length > 4 ? `${phone.slice(0, 3)} ••• ${phone.slice(-3)}` : phone ?? '';
+    phone && phone.length > 4 ? `${phone.slice(0, 3)} ••• ${phone.slice(-3)}` : (phone ?? '');
 
+  // ── Web layout ──────────────────────────────────────────────────────────────
+  if (isWide) {
+    return (
+      <AuthBackground
+        variant="web"
+        circles={webCircles}
+      >
+        <StatusBar style="light" />
+        <View style={authStyles.webCentered}>
+          <Reanimated.View entering={FadeIn.delay(50).duration(600)} style={web.backRow}>
+            <TouchableOpacity onPress={() => router.back()} style={web.backBtn} activeOpacity={0.7}>
+              <ChevronLeft size={16} color="rgba(255,255,255,0.6)" />
+              <Text style={web.backText}>Back</Text>
+            </TouchableOpacity>
+          </Reanimated.View>
+
+          <Reanimated.View entering={FadeIn.delay(100).duration(900)} style={web.brand}>
+            <View style={web.iconRing}>
+              <ShieldCheck size={30} color={auth.gold} strokeWidth={1.5} />
+            </View>
+            <Text style={web.heroTitle}>{'Check your\nphone'}</Text>
+            <Text style={web.heroSub}>
+              We sent a 6-digit code to <Text style={web.heroPhone}>{masked}</Text>
+            </Text>
+          </Reanimated.View>
+
+          <Reanimated.View entering={FadeInUp.delay(280).duration(600)} style={authStyles.lightCard}>
+            <OTPInput value={otp} onChange={setOtp} theme="light" />
+            <AuthButton
+              label={loading ? 'Verifying…' : 'Verify & Continue'}
+              onPress={handleVerify}
+              variant="navy"
+              loading={loading}
+            />
+            <ResendRow
+              seconds={seconds}
+              resending={resending}
+              onResend={handleResend}
+              light
+            />
+            {params.devOtp && <DevBanner otp={params.devOtp} light />}
+          </Reanimated.View>
+        </View>
+      </AuthBackground>
+    );
+  }
+
+  // ── Mobile layout ───────────────────────────────────────────────────────────
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
-      <StatusBar style="dark-content" />
-
-      <View style={styles.borderView}>
-        <TopAppBar variant="dark" />
-
-          <View style={styles.content}>
-            <Text style={styles.heading}>Verify Phone Number</Text>
-            <Text style={styles.subheading}>Enter the 6-digit code sent to {masked}.</Text>
-
-            <View style={styles.otpWrapper}>
-              <OTPBoxes value={otp} onChange={setOtp} />
-            </View>
-
-            <View style={styles.actionWrapper}>
-              <TouchableOpacity
-                onPress={handleVerify}
-                disabled={loading}
-                activeOpacity={0.88}
-                style={styles.verifyButton}
-              >
-                <Text style={styles.verifyButtonText}>
-                  {loading ? 'Verifying…' : 'Verify & Continue'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.resendRow}>
-              <Text style={styles.resendLabel}>Didn't receive the code?</Text>
-              {seconds > 0 ? (
-                <Text style={styles.resendTimer}>
-                  {'  '}Resend in 00:{seconds.toString().padStart(2, '0')}
-                </Text>
-              ) : (
-                <TouchableOpacity onPress={handleResend} disabled={resending} activeOpacity={0.7}>
-                  <Text style={styles.resendLink}>{resending ? 'Resending…' : 'Resend Code'}</Text>
+    <AuthBackground
+      circles={mobCircles}
+      isDark={isDark}
+    >
+      <StatusBar style={mt.statusBar} />
+      <SafeAreaView style={{ flex: 1 }}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={{ flex: 1 }}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={mob.inner}
+              keyboardVerticalOffset={top}
+            >
+              <Reanimated.View entering={FadeIn.delay(50).duration(600)} style={mob.topBar}>
+                <TouchableOpacity onPress={() => router.back()} style={mob.backBtn} activeOpacity={0.7}>
+                  <ChevronLeft size={20} color={mt.backBtn} />
+                  <Text style={[mob.backText, { color: mt.backBtn }]}>Back</Text>
                 </TouchableOpacity>
-              )}
-            </View>
+              </Reanimated.View>
 
-            {params.devOtp ? (
-              <View style={styles.devBanner}>
-                <Text style={styles.devBannerTitle}>Dev mode</Text>
-                <Text style={styles.devBannerBody}>
-                  Backend returned OTP <Text style={styles.devBannerOtp}>{params.devOtp}</Text> — autofilled above.
-                </Text>
-              </View>
-            ) : null}
+              <Reanimated.View entering={FadeIn.delay(100).duration(900)} layout={LinearTransition.springify()} style={mob.hero}>
+                <View style={mob.iconRing}>
+                  <ShieldCheck size={28} color={auth.gold} strokeWidth={1.5} />
+                </View>
+                {!keyboardVisible && (
+                  <Reanimated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(180)} style={{ alignItems: 'center' }}>
+                    <Text style={[mob.heroTitle, { color: mt.heroTitle }]}>{'Check your\nphone'}</Text>
+                    <Text style={[mob.heroSub, { color: mt.heroSubtitle }]}>
+                      {'We sent a 6-digit code to\n'}
+                      <Text style={mob.heroPhone}>{masked}</Text>
+                    </Text>
+                  </Reanimated.View>
+                )}
+              </Reanimated.View>
+
+              <Reanimated.View layout={LinearTransition.springify()} entering={FadeInUp.delay(280).duration(650)} style={[mt.card, mob.card]}>
+                <OTPInput value={otp} onChange={setOtp} theme={mt.inputTheme} />
+                <AuthButton
+                  label={loading ? 'Verifying…' : 'Verify & Continue'}
+                  onPress={handleVerify}
+                  variant="gold"
+                  loading={loading}
+                />
+                <ResendRow seconds={seconds} resending={resending} onResend={handleResend} light={!isDark} />
+                {params.devOtp && <DevBanner otp={params.devOtp} light={!isDark} />}
+              </Reanimated.View>
+            </KeyboardAvoidingView>
           </View>
-      </View>
-    </SafeAreaView>
+        </TouchableWithoutFeedback>
+      </SafeAreaView>
+    </AuthBackground>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 16,
-    paddingBottom: Platform.OS === 'android' ? StatusBar.currentHeight : 16,
-    backgroundColor: '#fcf8fa', // bg-background
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-  },
-  heading: {
-    fontFamily: 'NotoSerif_700Bold',
-    fontSize: 36,
-    lineHeight: 44,
-    color: '#1b1b1d',
-    textAlign: 'center',
-  },
-  subheading: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#45464d',
-    textAlign: 'center',
-    marginTop: 12,
-    paddingHorizontal: 16,
-  },
-  otpWrapper: {
-    marginTop: 40,
-    width: '100%',
-  },
-  otpRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  otpCell: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  otpInput: {
-    width: 48,
-    height: 56,
-    textAlign: 'center',
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#1b1b1d',
-    backgroundColor: '#fcf8fa',
-    borderRadius: 4,
-  },
-  otpInputEmpty: {
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function ResendRow({
+  seconds,
+  resending,
+  onResend,
+  light,
+}: {
+  seconds: number;
+  resending: boolean;
+  onResend: () => void;
+  light?: boolean;
+}) {
+  const labelColor = light ? '#45464d' : 'rgba(255,255,255,0.4)';
+  return (
+    <View style={sub.resendRow}>
+      <Text style={[sub.resendLabel, { color: labelColor }]}>Didn't receive the code?</Text>
+      {seconds > 0 ? (
+        <Text style={[sub.resendLabel, { color: labelColor }]}>
+          {' '}Resend in 00:{seconds.toString().padStart(2, '0')}
+        </Text>
+      ) : (
+        <TouchableOpacity onPress={onResend} disabled={resending} activeOpacity={0.7}>
+          <Text style={sub.resendLink}>{resending ? 'Resending…' : ' Resend Code'}</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
+function DevBanner({ otp, light }: { otp: string; light?: boolean }) {
+  return (
+    <View style={[sub.devBanner, light ? sub.devBannerLight : sub.devBannerDark]}>
+      <Text style={[sub.devTitle, { color: light ? '#7a5c00' : auth.gold }]}>Dev mode</Text>
+      <Text style={[sub.devBody, { color: light ? '#5a4400' : 'rgba(255,255,255,0.5)' }]}>
+        OTP <Text style={sub.devOtp}>{otp}</Text> autofilled above.
+      </Text>
+    </View>
+  );
+}
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+
+const web = StyleSheet.create({
+  brand: { alignItems: 'center' },
+  backRow: { width: '100%', maxWidth: 480, alignItems: 'flex-start' },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4 },
+  backText: { fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: '500' },
+  iconRing: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: 'rgba(203,167,47,0.1)',
     borderWidth: 1,
-    borderColor: '#c6c6cd',
-  },
-  otpInputFilled: {
-    borderWidth: 1.5,
-    borderColor: '#cba72f',
-  },
-  otpSeparator: {
-    width: 16,
-    height: 1.5,
-    backgroundColor: '#c6c6cd',
-    marginHorizontal: 2,
-  },
-  actionWrapper: {
-    marginTop: 32,
-    width: '100%',
-  },
-  verifyButton: {
-    backgroundColor: '#131b2e',
-    height: 52,
-    borderRadius: 8,
+    borderColor: 'rgba(203,167,47,0.25)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 20,
   },
-  verifyButtonText: {
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 14,
-    letterSpacing: 0.28,
+  heroTitle: {
+    fontSize: 48,
+    fontFamily: auth.fontSerif,
     color: '#ffffff',
-    textTransform: 'uppercase',
+    textAlign: 'center',
+    lineHeight: 60,
+    marginBottom: 10,
   },
+  heroSub: { fontSize: 15, color: 'rgba(255,255,255,0.45)', textAlign: 'center', lineHeight: 24 },
+  heroPhone: { color: auth.gold, fontWeight: '600' },
+});
+
+const mob = StyleSheet.create({
+  inner: { flex: 1, justifyContent: 'space-between' },
+  topBar: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 2,
+  },
+  backText: { fontSize: 14, color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
+  hero: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 },
+  iconRing: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(203,167,47,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(203,167,47,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  heroTitle: {
+    fontSize: 40,
+    fontFamily: auth.fontSerif,
+    color: '#ffffff',
+    textAlign: 'center',
+    lineHeight: 50,
+    marginBottom: 14,
+  },
+  heroSub: { fontSize: 14, color: 'rgba(255,255,255,0.45)', textAlign: 'center', lineHeight: 22 },
+  heroPhone: { color: auth.gold, fontWeight: '600' },
+  card: {
+    marginHorizontal: 16,
+    marginBottom: 28,
+  },
+});
+
+const sub = StyleSheet.create({
   resendRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 24,
-    gap: 4,
+    marginTop: 18,
+    flexWrap: 'wrap',
   },
-  resendLabel: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    color: '#45464d',
-  },
-  resendTimer: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    color: '#45464d',
-  },
-  resendLink: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 14,
-    color: '#cba72f',
-    marginLeft: 4,
-  },
+  resendLabel: { fontSize: 13 },
+  resendLink: { fontSize: 13, color: auth.gold, fontWeight: '600' },
   devBanner: {
-    marginTop: 32,
-    backgroundColor: '#ffe088',
-    borderRadius: 8,
-    padding: 16,
-    width: '100%',
-  },
-  devBannerTitle: {
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 12,
-    letterSpacing: 0.7,
-    textTransform: 'uppercase',
-    color: '#4e3d00',
-    textAlign: 'center',
-  },
-  devBannerBody: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    color: '#4e3d00',
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  devBannerOtp: {
-    fontFamily: 'Inter_600SemiBold',
-  },
-  borderView: {
-    flex: 1,
+    marginTop: 18,
     borderWidth: 1,
-    borderColor: '#c6c6cd',
-    borderRadius: 8,
-    marginHorizontal: 16,
+    borderRadius: 10,
+    padding: 14,
   },
+  devBannerLight: { backgroundColor: '#fff8e1', borderColor: 'rgba(203,167,47,0.3)' },
+  devBannerDark: { backgroundColor: 'rgba(203,167,47,0.1)', borderColor: 'rgba(203,167,47,0.25)' },
+  devTitle: {
+    fontSize: 10,
+    fontFamily: auth.fontSemiBold,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  devBody: { fontSize: 13, textAlign: 'center' },
+  devOtp: { fontWeight: '700' },
 });

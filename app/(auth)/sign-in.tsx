@@ -1,276 +1,330 @@
-import { useState } from 'react';
-import { Alert, Platform, Text, TextInput, TouchableOpacity, View, StyleSheet, KeyboardAvoidingView, ScrollView, Pressable } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableWithoutFeedback,
+  View,
+  useColorScheme,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowRight } from 'lucide-react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import PhoneInput from "react-native-phone-number-input";
+import { ArrowRight, Star } from 'lucide-react-native';
+import Reanimated, {
+  FadeIn,
+  FadeInUp,
+  FadeOut,
+  LinearTransition,
+} from 'react-native-reanimated';
 
-import { TopAppBar } from '@/components/ui/TopAppBar';
 import { requestPhoneOtp } from '@/lib/api/auth';
-import { SERVICE_URLS } from '@/lib/api/base';
 import { useAuthStore } from '@/store/authStore';
-
-function describeError(e: any): string {
-  if (e?.response) {
-    const status = e.response.status;
-    const data = e.response.data;
-    const detail = typeof data === 'string' ? data : data?.message ?? data?.error;
-    return `Server returned ${status}${detail ? ` — ${detail}` : ''}.`;
-  }
-  if (e?.message?.includes('Network Error')) {
-    return `Could not reach ${SERVICE_URLS.user}. Make sure the user-management service is running and reachable from this device.`;
-  }
-  if (e?.code === 'ECONNABORTED') {
-    return 'Request timed out. Is the backend reachable from this device?';
-  }
-  return e?.message ?? 'Unknown error.';
-}
+import { useIsWide } from '@/hooks/useIsWide';
+import { auth, authStyles, mobileCardTheme } from '@/constants/authTheme';
+import { AuthBackground } from '@/components/auth/AuthBackground';
+import { AuthButton } from '@/components/auth/AuthButton';
+import { describeError } from '@/lib/auth/alerts';
+import { useAuthBokeh } from '@/hooks/useAuthBokeh';
 
 export default function SignInScreen() {
   const router = useRouter();
   const setPendingPhone = useAuthStore((s) => s.setPendingPhone);
+  const isWide = useIsWide();
+  const { web: webCircles, mob: mobCircles } = useAuthBokeh('signIn');
+
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
-  const [countryCode, setCountryCode] = useState<CountryCode>('US');
-  const [country, setCountry] = useState<Country>();
-  const [visible, setVisible] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const { top } = useSafeAreaInsets();
+  const isDark = useColorScheme() !== 'light';
+  const mt = mobileCardTheme(isDark);
 
-  const formattedNumber = phone.replace(/\D/g, '');
-  const onSelect = (country: Country) => {
-    setCountryCode(country.cca2);
-    setCountry(country);
-    setVisible(false);
-  };
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const onShow = Keyboard.addListener(showEvt, () => setKeyboardVisible(true));
+    const onHide = Keyboard.addListener(hideEvt, () => setKeyboardVisible(false));
+    return () => { onShow.remove(); onHide.remove(); };
+  }, []);
 
+  const digits = phone.replace(/\D/g, '');
+  const canSubmit = digits.length >= 7;
 
   const handleSendOtp = async () => {
-    if (formattedNumber.length < 7) {
-      if (Platform.OS === 'web') {
-        window.alert('Please enter a valid phone number.');
-        return;
-      }
-      Alert.alert('Invalid number', 'Please enter a valid phone number.');
+    if (!canSubmit) {
+      if (Platform.OS === 'web') window.alert('Please enter a valid phone number.');
+      else Alert.alert('Invalid number', 'Please enter a valid phone number.');
       return;
     }
+    Keyboard.dismiss();
     setLoading(true);
     try {
-      const fullNumber = `+91${formattedNumber}`;
+      const fullNumber = `+91${digits}`;
       const res = await requestPhoneOtp({ phoneNumber: fullNumber });
       setPendingPhone(fullNumber);
-      router.push({
-        pathname: '/(auth)/otp-verify',
-        params: { devOtp: res.devOtp ?? '' },
-      });
+      router.push({ pathname: '/(auth)/otp-verify', params: { devOtp: res.devOtp ?? '' } });
     } catch (e: any) {
       const msg = describeError(e);
-      if (Platform.OS === 'web') {
-        window.alert(`Could not send OTP — ${msg}`);
-      } else {
-        Alert.alert('Could not send OTP', msg);
-      }
+      if (Platform.OS === 'web') window.alert(`Could not send OTP — ${msg}`);
+      else Alert.alert('Could not send OTP', msg);
     } finally {
       setLoading(false);
     }
   };
 
+  // ── Web layout ──────────────────────────────────────────────────────────────
+  if (isWide) {
+    return (
+      <AuthBackground
+        variant="web"
+        circles={webCircles}
+      >
+        <StatusBar style="light" />
+        <View style={authStyles.webCentered}>
+          <Reanimated.View entering={FadeIn.delay(100).duration(900)} style={web.brand}>
+            <View style={web.badge}>
+              <Star size={9} color={auth.gold} fill={auth.gold} />
+              <Text style={web.badgeText}>EVENTKART</Text>
+              <Star size={9} color={auth.gold} fill={auth.gold} />
+            </View>
+            <Text style={web.heroTitle}>Seamlessly discover,{'\n'} book & manage events</Text>
+          </Reanimated.View>
+
+          <Reanimated.View entering={FadeInUp.delay(280).duration(600)} style={authStyles.lightCard}>
+            <Text style={web.cardTitle}>Sign In</Text>
+            <Text style={web.cardSub}>Enter your phone number to continue</Text>
+
+            <Text style={web.label}>PHONE NUMBER</Text>
+            <View style={web.inputRow}>
+              <View style={web.dialCode}>
+                <Text style={web.dialCodeText}>+91</Text>
+              </View>
+              <TextInput
+                style={[web.input, focused && web.inputFocused]}
+                placeholder="000 0000000"
+                placeholderTextColor="#c6c6cd"
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={setPhone}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                selectionColor={auth.gold}
+              />
+            </View>
+
+            <AuthButton
+              label={loading ? 'Sending…' : 'Send Verification Code'}
+              onPress={handleSendOtp}
+              variant="navy"
+              disabled={!canSubmit}
+              loading={loading}
+              iconRight={!loading ? <ArrowRight size={18} color="#ffffff" /> : undefined}
+            />
+          </Reanimated.View>
+        </View>
+      </AuthBackground>
+    );
+  }
+
+  // ── Mobile layout ───────────────────────────────────────────────────────────
   return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" />
-
-        <View style={styles.borderView}>
-            <TopAppBar variant="dark" />
-
+    <AuthBackground
+      circles={mobCircles}
+      isDark={isDark}
+    >
+      <StatusBar style={mt.statusBar} />
+      <SafeAreaView style={{ flex: 1 }}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={{ flex: 1 }}>
             <KeyboardAvoidingView
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={styles.flexGrow}
+              style={mob.flex}
+              keyboardVerticalOffset={top}
             >
-              <ScrollView contentContainerStyle={styles.scrollContent}>
-                {/* Header Section */}
-                <View style={styles.heroSection}>
-                  <Text style={styles.title}>Welcome</Text>
-                  <Text style={styles.subtitle}>
-                    Enter your phone number to continue or create a new account.
-                  </Text>
+              <Reanimated.View entering={FadeIn.delay(100).duration(900)} layout={LinearTransition.springify()} style={mob.hero}>
+                <View style={mob.badge}>
+                  <Star size={11} color={mt.badgeColor} fill={mt.badgeColor} />
+                  <Text style={[mob.badgeText, { color: mt.badgeColor }]}>EVENTKART</Text>
+                  <Star size={11} color={mt.badgeColor} fill={mt.badgeColor} />
                 </View>
+                {!keyboardVisible && (
+                  <Reanimated.View
+                    entering={FadeIn.duration(300)}
+                    exiting={FadeOut.duration(180)}
+                    style={{ alignItems: 'center' }}
+                  >
+                    <Text style={[mob.heroTitle, { color: mt.heroTitle }]}>Seamlessly discover,{'\n'}book & manage events</Text>
+                  </Reanimated.View>
+                )}
+              </Reanimated.View>
 
-                {/* Form Section */}
-                <View style={styles.form}>
-                  <Text style={styles.label}>PHONE NUMBER</Text>
-                  <View style={styles.inputContainer}>
-                    {/* Country Code (Simplified Selector) */}
-                    <View style={styles.countrySelector} onPress={() => setVisible(true)}>
-                      <Text style={styles.inputText}>{country?.callingCode[0] ? `+${country.callingCode[0]}` : '+91'}</Text>
-                      {/*<MaterialIcons name="arrow-drop-down" size={20} color="#c6c6cd" />*/}
+              <Reanimated.View layout={LinearTransition.springify()} entering={FadeInUp.delay(280).duration(650)} style={[mt.card, mob.card]}>
+                <Text style={[mob.cardTitle, { color: mt.title }]}>Sign In</Text>
+                <Text style={[mob.cardSubtitle, { color: mt.subtitle }]}>Enter your phone number to continue</Text>
+
+                <View style={mob.field}>
+                  <Text style={[mob.fieldLabel, { color: mt.label }]}>PHONE NUMBER</Text>
+                  <View style={mob.inputRow}>
+                    <View style={[mob.dialCode, { backgroundColor: mt.inputBg, borderColor: mt.inputBorder }]}>
+                      <Text style={[mob.dialCodeText, { color: mt.inputText }]}>+91</Text>
                     </View>
-
-                    {/* Phone Input */}
                     <TextInput
-                      style={styles.phoneInput}
-                      placeholder="(555) 000-0000"
-                      placeholderTextColor="#c6c6cd"
+                      style={[
+                        mob.input,
+                        { backgroundColor: mt.inputBg, borderColor: mt.inputBorder, color: mt.inputText },
+                        focused && { borderColor: auth.gold, backgroundColor: mt.focusedBg },
+                      ]}
+                      placeholder="000 0000000"
+                      placeholderTextColor={mt.placeholder}
                       keyboardType="phone-pad"
                       value={phone}
                       onChangeText={setPhone}
+                      onFocus={() => setFocused(true)}
+                      onBlur={() => setFocused(false)}
+                      selectionColor={auth.gold}
                     />
                   </View>
                 </View>
 
-                {/* Bottom Action Section */}
-
-                <View style={styles.footer}>
-                  <TouchableOpacity
-                    onPress={handleSendOtp}
-                    disabled={loading || formattedNumber.length < 7}
-                    activeOpacity={0.88}
-                    style={[styles.submitButton, (loading || formattedNumber.length < 7) && styles.disabledButton]}>
-                    <Text className="font-sans-sb text-button text-white uppercase tracking-wide">
-                      {loading ? 'Sending…' : 'Send Verification Code'}
-                    </Text>
-                    {!loading && <ArrowRight size={18} color="#ffffff" />}
-                  </TouchableOpacity>
-                  {/*<TouchableOpacity style={styles.submitButton}>
-                    <Text style={styles.submitButtonText}>Send Verification Code</Text>
-                    <MaterialIcons name="send" size={30} color="white" />
-                  </TouchableOpacity>*/}
-                </View>
-              </ScrollView>
+                <AuthButton
+                  label={loading ? 'Sending…' : 'Send Verification Code'}
+                  onPress={handleSendOtp}
+                  variant="gold"
+                  disabled={!canSubmit}
+                  loading={loading}
+                  iconRight={!loading ? <ArrowRight size={18} color={auth.navy} /> : undefined}
+                />
+              </Reanimated.View>
             </KeyboardAvoidingView>
-        </View>
-          </SafeAreaView>
-        );
-      };
+          </View>
+        </TouchableWithoutFeedback>
+      </SafeAreaView>
+    </AuthBackground>
+  );
+}
 
-      const styles = StyleSheet.create({
-        container: {
-          flex: 1,
-          paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 16,
-          paddingBottom: Platform.OS === 'android' ? StatusBar.currentHeight : 16,
-          backgroundColor: '#fcf8fa', // bg-background
-        },
-        flexGrow: {
-          flex: 1,
-        },
-        scrollContent: {
-          flexGrow: 1,
-          paddingHorizontal: 24,
-          paddingBottom: 32,
-        },
-        heroSection: {
-          marginTop: 40,
-          marginBottom: 40,
-          alignItems: 'center',
-        },
-        title: {
-          fontSize: 30, // text-h2
-          fontWeight: '500',
-          color: '#000000',
-          marginBottom: 8,
-          fontFamily: Platform.OS === 'ios' ? 'Noto Serif' : 'serif',
-        },
-        subtitle: {
-          fontSize: 16,
-          color: '#45464d', // text-on-surface-variant
-          textAlign: 'center',
-          lineHeight: 24,
-        },
-        form: {
-          flex: 1,
-        },
-        label: {
-          fontSize: 12,
-          fontWeight: '500',
-          color: '#45464d',
-          letterSpacing: 1,
-          marginBottom: 8,
-          paddingLeft: 4,
-        },
-        inputContainer: {
-          flexDirection: 'row',
-          gap: 8,
-        },
-        countrySelector: {
-          height: 50,
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: '#ffffff',
-          borderWidth: 1,
-          borderColor: '#c6c6cd',
-          borderRadius: 8,
-          paddingHorizontal: 12,
-          gap: 4,
-        },
-        phoneInput: {
-          flex: 1,
-          height: 50,
-          backgroundColor: '#ffffff',
-          borderWidth: 1,
-          borderColor: '#c6c6cd',
-          borderRadius: 8,
-          paddingHorizontal: 16,
-          fontSize: 16,
-          color: '#1b1b1d',
-        },
-        inputText: {
-          fontSize: 16,
-          color: '#1b1b1d',
-        },
-        dropdownIcon: {
-          fontFamily: 'Material Symbols Outlined', // Replace with icon library
-          fontSize: 20,
-          color: '#c6c6cd',
-        },
-        footer: {
-          marginTop: 'auto',
-          paddingTop: 24,
-        },
-        submitButton: {
-          backgroundColor: '#000000', // bg-primary[cite: 2]
-          height: 56,
-          borderRadius: 8,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          elevation: 2,
-        },
-        disabledButton: {
-          backgroundColor: '#c6c6cd',
-        },
-        submitButtonText: {
-          color: '#ffffff',
-          fontSize: 14,
-          fontWeight: '600',
-          letterSpacing: 0.2,
-        },
-        buttonIcon: {
-          fontSize: 18,
-          color: '#ffffff',
-        },
-        loginRedirect: {
-          flexDirection: 'row',
-          justifyContent: 'center',
-          marginTop: 24,
-          alignItems: 'center',
-        },
-        bodySm: {
-          fontSize: 14,
-          color: '#45464d',
-        },
-        linkText: {
-          fontSize: 14,
-          fontWeight: '600',
-          color: '#000000',
-        },
-        borderView: {
-          flex: 1,
-          borderWidth: 1,
-          borderColor: '#c6c6cd',
-          borderRadius: 8,
-          marginHorizontal: 16,
-        },
-      });
+// ── Web styles ────────────────────────────────────────────────────────────────
+const web = StyleSheet.create({
+  brand: { alignItems: 'center' },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: 'rgba(203,167,47,0.1)',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: 'rgba(203,167,47,0.3)',
+    marginBottom: 20,
+  },
+  badgeText: { fontSize: 11, color: auth.gold, letterSpacing: 2.5, fontWeight: '700' },
+  heroTitle: {
+    fontSize: 52,
+    fontFamily: auth.fontSerif,
+    color: '#ffffff',
+    textAlign: 'center',
+    lineHeight: 64,
+    marginBottom: 10,
+  },
+  heroSub: { fontSize: 15, color: 'rgba(255,255,255,0.45)', textAlign: 'center', letterSpacing: 0.2 },
+  cardTitle: { fontSize: 22, fontFamily: auth.fontSerif, color: '#1b1b1d', marginBottom: 4 },
+  cardSub: { fontSize: 13, color: '#45464d', marginBottom: 24 },
+  label: { fontSize: 10, fontFamily: auth.fontSemiBold, color: '#45464d', letterSpacing: 2, marginBottom: 8 },
+  inputRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
+  dialCode: {
+    height: 50,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f9f9f9',
+    borderWidth: 1,
+    borderColor: '#c6c6cd',
+    borderRadius: 10,
+  },
+  dialCodeText: { fontSize: 16, color: '#1b1b1d', fontWeight: '600' },
+  input: {
+    flex: 1,
+    height: 50,
+    backgroundColor: '#f9f9f9',
+    borderWidth: 1,
+    borderColor: '#c6c6cd',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#1b1b1d',
+  },
+  inputFocused: { borderColor: auth.gold, borderWidth: 1.5, backgroundColor: '#ffffff' },
+});
+
+// ── Mobile styles ─────────────────────────────────────────────────────────────
+const mob = StyleSheet.create({
+  flex: { flex: 1, justifyContent: 'space-between' },
+  hero: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingTop: 20,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(203,167,47,0.18)',
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 100,
+    borderWidth: 1.5,
+    borderColor: 'rgba(203,167,47,0.55)',
+    marginBottom: 22,
+  },
+  badgeText: { fontSize: 13, fontFamily: auth.fontSemiBold, letterSpacing: 3 },
+  heroTitle: {
+    fontSize: 32,
+    fontFamily: auth.fontSerif,
+    color: '#ffffff',
+    textAlign: 'center',
+    lineHeight: 42,
+    marginBottom: 12,
+  },
+  heroSub: { fontSize: 14, color: 'rgba(255,255,255,0.45)', textAlign: 'center', letterSpacing: 0.2 },
+  card: {
+    marginHorizontal: 16,
+    marginBottom: 28,
+  },
+  cardTitle: { fontSize: 22, fontFamily: auth.fontSerif, color: '#ffffff', marginBottom: 4 },
+  cardSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 24 },
+  field: { marginBottom: 20 },
+  fieldLabel: { fontSize: 10, fontFamily: auth.fontSemiBold, color: auth.gold, letterSpacing: 2, marginBottom: 8 },
+  inputRow: { flexDirection: 'row', gap: 8 },
+  dialCode: {
+    height: 50,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 10,
+  },
+  dialCodeText: { fontSize: 16, color: '#ffffff', fontWeight: '600' },
+  input: {
+    flex: 1,
+    height: 50,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#ffffff',
+  },
+  inputFocused: { borderColor: auth.gold, backgroundColor: 'rgba(255,255,255,0.09)' },
+});
