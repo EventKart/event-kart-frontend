@@ -93,8 +93,7 @@ export default function SignInScreen() {
               <Text style={web.badgeText}>EVENTKART</Text>
               <Star size={9} color={auth.gold} fill={auth.gold} />
             </View>
-            <Text style={web.heroTitle}>Less planning,{'\n'}more living.</Text>
-            <Text style={web.heroSub}>Seamlessly discover, book & manage events</Text>
+            <Text style={web.heroTitle}>Seamlessly discover,{'\n'} book & manage events</Text>
           </Reanimated.View>
 
           <Reanimated.View entering={FadeInUp.delay(280).duration(600)} style={authStyles.lightCard}>
@@ -160,8 +159,7 @@ export default function SignInScreen() {
                     exiting={FadeOut.duration(180)}
                     style={{ alignItems: 'center' }}
                   >
-                    <Text style={[mob.heroTitle, { color: mt.heroTitle }]}>Less planning,{'\n'}more living.</Text>
-                    <Text style={[mob.heroSub, { color: mt.heroSubtitle }]}>Seamlessly discover, book & manage events</Text>
+                    <Text style={[mob.heroTitle, { color: mt.heroTitle }]}>Seamlessly discover,{'\n'}book & manage events</Text>
                   </Reanimated.View>
                 )}
               </Reanimated.View>
@@ -289,11 +287,11 @@ const mob = StyleSheet.create({
   },
   badgeText: { fontSize: 13, fontFamily: auth.fontSemiBold, letterSpacing: 3 },
   heroTitle: {
-    fontSize: 44,
+    fontSize: 32,
     fontFamily: auth.fontSerif,
     color: '#ffffff',
     textAlign: 'center',
-    lineHeight: 54,
+    lineHeight: 42,
     marginBottom: 12,
   },
   heroSub: { fontSize: 14, color: 'rgba(255,255,255,0.45)', textAlign: 'center', letterSpacing: 0.2 },
