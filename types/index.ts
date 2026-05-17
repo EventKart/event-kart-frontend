@@ -132,6 +132,15 @@ export interface InvitationStats {
 
 export type RSVPStatus = 'YES' | 'NO' | 'MAYBE' | 'NOT_RSVPED';
 
+export type VendorAttributeFieldType = 'STRING' | 'INTEGER' | 'BOOLEAN';
+
+export interface VendorAttributeField {
+  key: string;
+  type: VendorAttributeFieldType;
+  required: boolean;
+  label: string;
+}
+
 export interface Media {
   id: string;
   name: string;

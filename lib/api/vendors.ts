@@ -1,7 +1,7 @@
 import { gql } from 'graphql-request';
 
 import { vendorGql } from './graphqlClient';
-import type { Vendor, VendorInput, VendorState, VendorType } from '@/types';
+import type { Vendor, VendorAttributeField, VendorInput, VendorState, VendorType } from '@/types';
 
 export interface SearchVendorsResult {
   vendors: Vendor[];
@@ -87,6 +87,21 @@ export async function createVendor(input: VendorInput): Promise<Vendor> {
   `;
   const data = await vendorGql.request<{ createVendor: Vendor }>(mutation, { input });
   return data.createVendor;
+}
+
+export async function getVendorAttributeSchema(type: VendorType): Promise<VendorAttributeField[]> {
+  const query = gql`
+    query VendorAttributeSchema($type: VendorType!) {
+      vendorAttributeSchema(type: $type) {
+        key
+        type
+        required
+        label
+      }
+    }
+  `;
+  const data = await vendorGql.request<{ vendorAttributeSchema: VendorAttributeField[] }>(query, { type });
+  return data.vendorAttributeSchema;
 }
 
 export async function updateVendor(id: string, input: VendorInput): Promise<Vendor> {

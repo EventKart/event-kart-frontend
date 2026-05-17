@@ -28,7 +28,7 @@ class GraphQLClient {
     };
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    if (__DEV__) console.log(`[gql] → ${this.url}`, token ? 'with auth' : 'no auth');
+    if (__DEV__) console.log(`[gql] → ${this.url}`, token ? 'with auth' : 'no auth', { variables });
 
     let response: Response;
     try {
@@ -66,6 +66,8 @@ class GraphQLClient {
       if (__DEV__) console.warn(`[gql] ✖ ${this.url}`, body.errors);
       throw err;
     }
+
+    if (__DEV__) console.log(`[gql] ← ${this.url}`, body?.data);
 
     return body?.data as T;
   }

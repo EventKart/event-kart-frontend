@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { getAllVendors, getVendor, searchVendors } from '@/lib/api/vendors';
+import { getAllVendors, getVendor, getVendorAttributeSchema, searchVendors } from '@/lib/api/vendors';
 import { MOCK_VENDORS } from '@/lib/mockData';
-import type { Vendor, VendorState, VendorType } from '@/types';
+import type { Vendor, VendorAttributeField, VendorState, VendorType } from '@/types';
 
 export function useVendors(states: VendorState[] = ['ACTIVE']) {
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -112,4 +112,32 @@ export function useSearchVendors(query: string, type: VendorType | null) {
   }, [page, totalPages, loadingMore, query, type, doFetch]);
 
   return { vendors, loading, loadingMore, hasMore: page < totalPages, loadMore };
+}
+
+export function useVendorAttributeSchema(type: VendorType | null) {
+  const [fields, setFields] = useState<VendorAttributeField[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!type) return;
+    let cancelled = false;
+    setLoading(true);
+    getVendorAttributeSchema(type)
+      .then((data) => {
+        if (cancelled) return;
+        setFields(data);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        console.warn('[useVendorAttributeSchema] failed', e?.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [type]);
+
+  return { fields, loading };
 }
