@@ -11,10 +11,10 @@ export default function VendorDetailsStep() {
   const router = useRouter();
   const s = useOnboardingStore();
 
-  const valid = s.name.trim() && s.email.trim() && s.contactNumber.trim();
+  const valid = s.name.trim();
 
   return (
-    <Screen scroll padded={false}>
+    <Screen scroll padded={false} edges={['bottom']}>
       <View className="px-6 pt-4 pb-10 gap-4">
         <Text className="font-serif-bold text-h2 text-surface-on">Business details</Text>
         <Text className="font-sans text-body-md text-surface-on-variant">
@@ -28,21 +28,6 @@ export default function VendorDetailsStep() {
             value={s.name}
             onChangeText={(v) => s.set('name', v)}
           />
-          <Input
-            label="Email"
-            placeholder="hello@yourbusiness.in"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={s.email}
-            onChangeText={(v) => s.set('email', v)}
-          />
-          <Input
-            label="Contact Number"
-            placeholder="+91 98765 43210"
-            keyboardType="phone-pad"
-            value={s.contactNumber}
-            onChangeText={(v) => s.set('contactNumber', v)}
-          />
         </View>
 
         <View className="mt-2">
@@ -52,8 +37,9 @@ export default function VendorDetailsStep() {
           <TypeFields />
         </View>
 
-        <View className="mt-4">
-          <Button label="Next" disabled={!valid} onPress={() => router.push('/(auth)/vendor-onboard/step-3-documents')} />
+        <View className="mt-4 flex-row gap-3">
+          <Button label="Previous" variant="secondary" fullWidth={false} className="flex-1" onPress={() => router.back()} />
+          <Button label="Next" fullWidth={false} className="flex-1" disabled={!valid} onPress={() => router.push('/(auth)/vendor-onboard/step-3-documents')} />
         </View>
       </View>
     </Screen>

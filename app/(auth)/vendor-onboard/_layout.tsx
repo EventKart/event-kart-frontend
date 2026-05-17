@@ -1,5 +1,6 @@
 import { Stack, useSegments } from 'expo-router';
 import { Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const STEPS = ['step-1-type', 'step-2-details', 'step-3-documents'] as const;
 
@@ -10,8 +11,8 @@ export default function VendorOnboardLayout() {
   const progress = ((currentIndex + 1) / STEPS.length) * 100;
 
   return (
-    <View className="flex-1 bg-bg">
-      <View className="px-6 pt-14 pb-2">
+    <SafeAreaView edges={['top']} className="flex-1 bg-bg">
+      <View className="px-6 pt-2 pb-5">
         <Text className="font-sans-md text-label-md uppercase tracking-wider text-surface-on-variant">
           Vendor Setup · Step {currentIndex + 1} of {STEPS.length}
         </Text>
@@ -28,6 +29,6 @@ export default function VendorOnboardLayout() {
           contentStyle: { backgroundColor: '#fcf8fa' },
         }}
       />
-    </View>
+    </SafeAreaView>
   );
 }

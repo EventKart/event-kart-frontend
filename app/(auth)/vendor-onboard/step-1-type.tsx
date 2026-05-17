@@ -30,7 +30,7 @@ export default function VendorTypeStep() {
   const setField = useOnboardingStore((s) => s.set);
 
   return (
-    <Screen scroll padded={false}>
+    <Screen scroll padded={false} edges={['bottom']}>
       <View className="flex-1 px-6 pt-4 pb-6">
         <Text className="font-serif-bold text-h2 text-surface-on">What service do you offer?</Text>
         <Text className="font-sans text-body-md text-surface-on-variant mt-2">
