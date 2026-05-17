@@ -33,7 +33,9 @@ export type VendorType =
   | 'DECORATOR'
   | 'PRIEST'
   | 'PHOTOGRAPHER'
-  | 'BAND';
+  | 'BAND'
+  | 'MAKEUP_ARTIST'
+  | 'MEHENDI_ARTIST';
 
 export type VendorState =
   | 'DRAFT'

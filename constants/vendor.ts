@@ -44,6 +44,18 @@ export const VENDOR_TYPE_META: Record<VendorType, VendorTypeMeta> = {
     hero: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=1200',
     thumb: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600',
   },
+  MAKEUP_ARTIST: {
+    label: 'Makeup Artist',
+    plural: 'Makeup Artists',
+    hero: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=1200',
+    thumb: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=600',
+  },
+  MEHENDI_ARTIST: {
+    label: 'Mehendi Artist',
+    plural: 'Mehendi Artists',
+    hero: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=1200',
+    thumb: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=600',
+  },
 };
 
 export const VENDOR_TYPES: VendorType[] = [
@@ -53,4 +65,6 @@ export const VENDOR_TYPES: VendorType[] = [
   'PHOTOGRAPHER',
   'PRIEST',
   'BAND',
+  'MAKEUP_ARTIST',
+  'MEHENDI_ARTIST',
 ];

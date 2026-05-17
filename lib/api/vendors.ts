@@ -104,6 +104,16 @@ export async function getVendorAttributeSchema(type: VendorType): Promise<Vendor
   return data.vendorAttributeSchema;
 }
 
+export async function getVendorTypes(): Promise<VendorType[]> {
+  const query = gql`
+    query VendorTypes {
+      vendorTypes
+    }
+  `;
+  const data = await vendorGql.request<{ vendorTypes: VendorType[] }>(query);
+  return data.vendorTypes;
+}
+
 export async function updateVendor(id: string, input: VendorInput): Promise<Vendor> {
   const mutation = gql`
     ${VENDOR_FRAGMENT}

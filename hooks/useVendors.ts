@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { getAllVendors, getVendor, getVendorAttributeSchema, searchVendors } from '@/lib/api/vendors';
+import { getAllVendors, getVendor, getVendorAttributeSchema, getVendorTypes, searchVendors } from '@/lib/api/vendors';
 import { MOCK_VENDORS } from '@/lib/mockData';
 import type { Vendor, VendorAttributeField, VendorState, VendorType } from '@/types';
 
@@ -112,6 +112,33 @@ export function useSearchVendors(query: string, type: VendorType | null) {
   }, [page, totalPages, loadingMore, query, type, doFetch]);
 
   return { vendors, loading, loadingMore, hasMore: page < totalPages, loadMore };
+}
+
+export function useVendorTypes() {
+  const [types, setTypes] = useState<VendorType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getVendorTypes()
+      .then((data) => {
+        if (cancelled) return;
+        setTypes(data);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        console.warn('[useVendorTypes] failed', e?.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return { types, loading };
 }
 
 export function useVendorAttributeSchema(type: VendorType | null) {
