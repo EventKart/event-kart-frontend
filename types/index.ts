@@ -33,7 +33,9 @@ export type VendorType =
   | 'DECORATOR'
   | 'PRIEST'
   | 'PHOTOGRAPHER'
-  | 'BAND';
+  | 'BAND'
+  | 'MAKEUP_ARTIST'
+  | 'MEHENDI_ARTIST';
 
 export type VendorState =
   | 'DRAFT'
@@ -56,25 +58,7 @@ export interface Vendor {
   contactNumber: string;
   email: string;
   documents: VendorDocuments;
-
-  address?: string;
-  capacity?: number;
-  hasParking?: boolean;
-
-  cuisines?: string[];
-  providesCutlery?: boolean;
-
-  themes?: string[];
-  providesLighting?: boolean;
-
-  languages?: string[];
-  religion?: string;
-
-  providesDroneShoot?: boolean;
-  providesVideography?: boolean;
-
-  instruments?: string[];
-  numberOfMembers?: number;
+  attributes?: Record<string, unknown>;
 }
 
 export interface VendorInput {
@@ -84,25 +68,7 @@ export interface VendorInput {
   name: string;
   contactNumber: string;
   email: string;
-
-  address?: string;
-  capacity?: number;
-  hasParking?: boolean;
-
-  cuisines?: string[];
-  providesCutlery?: boolean;
-
-  themes?: string[];
-  providesLighting?: boolean;
-
-  languages?: string[];
-  religion?: string;
-
-  providesDroneShoot?: boolean;
-  providesVideography?: boolean;
-
-  instruments?: string[];
-  numberOfMembers?: number;
+  attributes?: Record<string, unknown>;
 }
 
 export interface Invitation {
@@ -131,6 +97,15 @@ export interface InvitationStats {
 }
 
 export type RSVPStatus = 'YES' | 'NO' | 'MAYBE' | 'NOT_RSVPED';
+
+export type VendorAttributeFieldType = 'STRING' | 'INTEGER' | 'BOOLEAN';
+
+export interface VendorAttributeField {
+  key: string;
+  type: VendorAttributeFieldType;
+  required: boolean;
+  label: string;
+}
 
 export interface Media {
   id: string;

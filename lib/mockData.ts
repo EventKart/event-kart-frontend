@@ -9,8 +9,7 @@ export const MOCK_VENDORS: Vendor[] = [
     contactNumber: '+91 98200 11122',
     email: 'hello@rhythmlight.in',
     documents: { aadhar: 'XXXX-XXXX-1234' },
-    providesDroneShoot: true,
-    providesVideography: true,
+    attributes: { providesDroneShoot: true, providesVideography: true },
   },
   {
     id: 'v2',
@@ -20,8 +19,7 @@ export const MOCK_VENDORS: Vendor[] = [
     contactNumber: '+91 91234 56789',
     email: 'orders@culinarycanvas.in',
     documents: { aadhar: 'XXXX-XXXX-5678' },
-    cuisines: ['North Indian', 'Italian', 'Continental'],
-    providesCutlery: true,
+    attributes: { cuisines: ['North Indian', 'Italian', 'Continental'], providesCutlery: true },
   },
   {
     id: 'v3',
@@ -31,9 +29,7 @@ export const MOCK_VENDORS: Vendor[] = [
     contactNumber: '+91 99887 11122',
     email: 'bookings@marigoldestate.in',
     documents: { aadhar: 'XXXX-XXXX-9012' },
-    address: '12 Lavelle Road, Bengaluru',
-    capacity: 350,
-    hasParking: true,
+    attributes: { address: '12 Lavelle Road, Bengaluru', capacity: 350, hasParking: true },
   },
   {
     id: 'v4',
@@ -43,8 +39,7 @@ export const MOCK_VENDORS: Vendor[] = [
     contactNumber: '+91 90000 33344',
     email: 'studio@petalpaper.in',
     documents: { aadhar: 'XXXX-XXXX-3456' },
-    themes: ['Floral', 'Modern Minimal', 'Vintage'],
-    providesLighting: true,
+    attributes: { themes: ['Floral', 'Modern Minimal', 'Vintage'], providesLighting: true },
   },
   {
     id: 'v5',
@@ -54,8 +49,7 @@ export const MOCK_VENDORS: Vendor[] = [
     contactNumber: '+91 90000 99887',
     email: 'rsharma@vedicrites.in',
     documents: { aadhar: 'XXXX-XXXX-7890' },
-    languages: ['Sanskrit', 'Hindi', 'English'],
-    religion: 'Hinduism',
+    attributes: { languages: ['Sanskrit', 'Hindi', 'English'], religion: 'Hinduism' },
   },
   {
     id: 'v6',
@@ -65,8 +59,7 @@ export const MOCK_VENDORS: Vendor[] = [
     contactNumber: '+91 90000 22211',
     email: 'gigs@mandolinquartet.in',
     documents: { aadhar: 'XXXX-XXXX-2233' },
-    instruments: ['Mandolin', 'Cello', 'Guitar', 'Vocals'],
-    numberOfMembers: 4,
+    attributes: { instruments: ['Mandolin', 'Cello', 'Guitar', 'Vocals'], numberOfMembers: 4 },
   },
 ];
 

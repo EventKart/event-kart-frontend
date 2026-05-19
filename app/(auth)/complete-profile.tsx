@@ -319,7 +319,7 @@ function RoleToggle({
             onPress={() => onChange(r)}
             style={[role.tab, active && (light ? role.tabActiveLight : role.tabActiveDark)]}
           >
-            <Text style={[role.text, active && (light ? role.textActiveLight : role.textActiveDark)]}>
+            <Text style={[role.text, light ? role.textInactiveLight : role.textInactiveDark, active && (light ? role.textActiveLight : role.textActiveDark)]}>
               {r === 'USER' ? 'I am a Planner' : 'I am a Vendor'}
             </Text>
           </Pressable>
@@ -377,7 +377,9 @@ const role = StyleSheet.create({
   tab: { flex: 1, paddingVertical: 10, borderRadius: 7, alignItems: 'center' },
   tabActiveDark: { backgroundColor: 'rgba(255,255,255,0.15)' },
   tabActiveLight: { backgroundColor: '#ffffff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3 },
-  text: { fontFamily: 'Inter_600SemiBold', fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' },
+  text: { fontFamily: 'Inter_600SemiBold', fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase' },
+  textInactiveDark: { color: 'rgba(255,255,255,0.45)' },
+  textInactiveLight: { color: '#6b7280' },
   textActiveDark: { color: '#ffffff' },
   textActiveLight: { color: auth.navy },
 });

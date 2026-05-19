@@ -5,13 +5,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { useVendor } from '@/hooks/useVendors';
+import { useVendor, useVendorAttributeSchema } from '@/hooks/useVendors';
 import { VENDOR_TYPE_META } from '@/constants/vendor';
+import type { VendorAttributeField } from '@/types';
 
 export default function VendorDetailScreen() {
   const router = useRouter();
   const { vendorId } = useLocalSearchParams<{ vendorId: string }>();
   const { vendor, loading } = useVendor(vendorId);
+  const detailRows = useDetailRows(vendor);
 
   if (loading) {
     return (
@@ -33,7 +35,6 @@ export default function VendorDetailScreen() {
   }
 
   const meta = VENDOR_TYPE_META[vendor.type];
-  const detailRows = detailRowsFor(vendor);
 
   return (
     <View className="flex-1 bg-bg">
@@ -77,7 +78,7 @@ export default function VendorDetailScreen() {
               <View className="flex-row items-center gap-1">
                 <MapPin size={14} color="#76777d" />
                 <Text className="font-sans text-body-sm text-surface-on-variant">
-                  {vendor.address ?? 'Bengaluru, India'}
+                  {(vendor.attributes?.['address'] as string | undefined) ?? 'Bengaluru, India'}
                 </Text>
               </View>
             </View>
@@ -96,7 +97,7 @@ export default function VendorDetailScreen() {
                 Details available on request.
               </Text>
             ) : (
-              detailRows.map((row) => (
+              detailRows.map((row: { label: string; value: string }) => (
                 <View key={row.label} className="flex-row items-center justify-between">
                   <Text className="font-sans text-body-sm text-surface-on-variant">{row.label}</Text>
                   <Text className="font-sans-sb text-body-sm text-surface-on text-right flex-1 ml-3">
@@ -196,35 +197,20 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-function detailRowsFor(v: ReturnType<typeof useVendor>['vendor']) {
-  if (!v) return [];
-  const rows: Array<{ label: string; value: string }> = [];
-  switch (v.type) {
-    case 'VENUE':
-      if (v.capacity) rows.push({ label: 'Capacity', value: `${v.capacity} guests` });
-      if (v.address) rows.push({ label: 'Address', value: v.address });
-      rows.push({ label: 'Parking', value: v.hasParking ? 'Available' : 'Not available' });
-      break;
-    case 'CATERER':
-      if (v.cuisines?.length) rows.push({ label: 'Cuisines', value: v.cuisines.join(', ') });
-      rows.push({ label: 'Cutlery included', value: v.providesCutlery ? 'Yes' : 'No' });
-      break;
-    case 'DECORATOR':
-      if (v.themes?.length) rows.push({ label: 'Themes', value: v.themes.join(', ') });
-      rows.push({ label: 'Lighting', value: v.providesLighting ? 'Provided' : 'Not provided' });
-      break;
-    case 'PRIEST':
-      if (v.languages?.length) rows.push({ label: 'Languages', value: v.languages.join(', ') });
-      if (v.religion) rows.push({ label: 'Religion', value: v.religion });
-      break;
-    case 'PHOTOGRAPHER':
-      rows.push({ label: 'Drone shoot', value: v.providesDroneShoot ? 'Yes' : 'No' });
-      rows.push({ label: 'Videography', value: v.providesVideography ? 'Yes' : 'No' });
-      break;
-    case 'BAND':
-      if (v.numberOfMembers) rows.push({ label: 'Members', value: `${v.numberOfMembers}` });
-      if (v.instruments?.length) rows.push({ label: 'Instruments', value: v.instruments.join(', ') });
-      break;
-  }
-  return rows;
+function useDetailRows(vendor: ReturnType<typeof useVendor>['vendor']): Array<{ label: string; value: string }> {
+  const { fields } = useVendorAttributeSchema(vendor?.type ?? null);
+  if (!vendor || !fields.length) return [];
+  const a = vendor.attributes ?? {};
+  return fields.flatMap((field: VendorAttributeField) => {
+    const raw = a[field.key];
+    if (field.type === 'BOOLEAN') {
+      return [{ label: field.label, value: raw ? 'Yes' : 'No' }];
+    }
+    if (raw === undefined || raw === null) return [];
+    const value = Array.isArray(raw)
+      ? (raw as unknown[]).filter(Boolean).join(', ')
+      : String(raw).trim();
+    if (!value) return [];
+    return [{ label: field.label, value }];
+  });
 }

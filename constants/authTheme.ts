@@ -43,6 +43,7 @@ export const authStyles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 20,
     padding: 32,
+    gap: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.25,

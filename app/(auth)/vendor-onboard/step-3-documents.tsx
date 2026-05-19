@@ -38,7 +38,7 @@ export default function VendorDocumentsStep() {
   };
 
   return (
-    <Screen scroll padded={false}>
+    <Screen scroll padded={false} edges={['bottom']}>
       <View className="px-6 pt-4 pb-10 gap-4">
         <Text className="font-serif-bold text-h2 text-surface-on">Verification documents</Text>
         <Text className="font-sans text-body-md text-surface-on-variant">
@@ -72,8 +72,9 @@ export default function VendorDocumentsStep() {
           </Text>
         </View>
 
-        <View className="mt-4">
-          <Button label="Complete Setup" disabled={!valid} loading={submitting} onPress={handleSubmit} />
+        <View className="mt-4 flex-row gap-3">
+          <Button label="Previous" variant="secondary" fullWidth={false} className="flex-1" onPress={() => router.back()} />
+          <Button label="Complete Setup" fullWidth={false} className="flex-1" disabled={!valid} loading={submitting} onPress={handleSubmit} />
         </View>
       </View>
     </Screen>

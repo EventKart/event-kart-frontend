@@ -14,13 +14,13 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowRight, Star } from 'lucide-react-native';
+import { ArrowRight } from 'lucide-react-native';
 import Reanimated, {
   FadeIn,
   FadeInUp,
-  FadeOut,
   LinearTransition,
 } from 'react-native-reanimated';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 
 import { requestPhoneOtp } from '@/lib/api/auth';
 import { useAuthStore } from '@/store/authStore';
@@ -87,13 +87,12 @@ export default function SignInScreen() {
       >
         <StatusBar style="light" />
         <View style={authStyles.webCentered}>
-          <Reanimated.View entering={FadeIn.delay(100).duration(900)} style={web.brand}>
-            <View style={web.badge}>
-              <Star size={9} color={auth.gold} fill={auth.gold} />
-              <Text style={web.badgeText}>EVENTKART</Text>
-              <Star size={9} color={auth.gold} fill={auth.gold} />
-            </View>
-            <Text style={web.heroTitle}>Seamlessly discover,{'\n'} book & manage events</Text>
+          <Reanimated.View entering={FadeIn.delay(100).duration(900)}>
+            <BrandLogo
+              size="large"
+              color="#ffffff"
+              subtitleColor="rgba(255,255,255,0.55)"
+            />
           </Reanimated.View>
 
           <Reanimated.View entering={FadeInUp.delay(280).duration(600)} style={authStyles.lightCard}>
@@ -148,20 +147,11 @@ export default function SignInScreen() {
               keyboardVerticalOffset={top}
             >
               <Reanimated.View entering={FadeIn.delay(100).duration(900)} layout={LinearTransition.springify()} style={mob.hero}>
-                <View style={mob.badge}>
-                  <Star size={11} color={mt.badgeColor} fill={mt.badgeColor} />
-                  <Text style={[mob.badgeText, { color: mt.badgeColor }]}>EVENTKART</Text>
-                  <Star size={11} color={mt.badgeColor} fill={mt.badgeColor} />
-                </View>
-                {!keyboardVisible && (
-                  <Reanimated.View
-                    entering={FadeIn.duration(300)}
-                    exiting={FadeOut.duration(180)}
-                    style={{ alignItems: 'center' }}
-                  >
-                    <Text style={[mob.heroTitle, { color: mt.heroTitle }]}>Seamlessly discover,{'\n'}book & manage events</Text>
-                  </Reanimated.View>
-                )}
+                <BrandLogo
+                  color={mt.badgeColor}
+                  subtitleColor={mt.heroSubtitle}
+                  showTagline={!keyboardVisible}
+                />
               </Reanimated.View>
 
               <Reanimated.View layout={LinearTransition.springify()} entering={FadeInUp.delay(280).duration(650)} style={[mt.card, mob.card]}>
@@ -211,29 +201,6 @@ export default function SignInScreen() {
 
 // ── Web styles ────────────────────────────────────────────────────────────────
 const web = StyleSheet.create({
-  brand: { alignItems: 'center' },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    backgroundColor: 'rgba(203,167,47,0.1)',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: 'rgba(203,167,47,0.3)',
-    marginBottom: 20,
-  },
-  badgeText: { fontSize: 11, color: auth.gold, letterSpacing: 2.5, fontWeight: '700' },
-  heroTitle: {
-    fontSize: 52,
-    fontFamily: auth.fontSerif,
-    color: '#ffffff',
-    textAlign: 'center',
-    lineHeight: 64,
-    marginBottom: 10,
-  },
-  heroSub: { fontSize: 15, color: 'rgba(255,255,255,0.45)', textAlign: 'center', letterSpacing: 0.2 },
   cardTitle: { fontSize: 22, fontFamily: auth.fontSerif, color: '#1b1b1d', marginBottom: 4 },
   cardSub: { fontSize: 13, color: '#45464d', marginBottom: 24 },
   label: { fontSize: 10, fontFamily: auth.fontSemiBold, color: '#45464d', letterSpacing: 2, marginBottom: 8 },
