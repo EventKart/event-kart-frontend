@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Check } from 'lucide-react-native';
@@ -13,13 +14,21 @@ export default function VendorDetailsStep() {
   const router = useRouter();
   const s = useOnboardingStore();
   const { fields, loading } = useVendorAttributeSchema(s.type);
+  const [submitted, setSubmitted] = useState(false);
 
-  const valid =
+  const requiredTextFields = fields.filter((f) => f.required && f.type !== 'BOOLEAN');
+  const isValid =
     Boolean(s.name.trim()) &&
     !loading &&
+    requiredTextFields.every((f) => String(s.attributes[f.key] ?? '').trim());
+
+  function handleNext() {
     fields
-      .filter((f) => f.required && f.type !== 'BOOLEAN')
-      .every((f) => String((s as any)[f.key] ?? '').trim());
+      .filter((f) => f.required && f.type === 'BOOLEAN' && !(f.key in s.attributes))
+      .forEach((f) => s.setAttribute(f.key, false));
+    setSubmitted(true);
+    if (isValid) router.push('/(auth)/vendor-onboard/step-3-documents');
+  }
 
   return (
     <Screen scroll padded={false} edges={['bottom']}>
@@ -31,10 +40,11 @@ export default function VendorDetailsStep() {
 
         <View className="gap-4 mt-2">
           <Input
-            label="Business Name"
+            label="Business Name *"
             placeholder="e.g. Petal & Paper Studio"
             value={s.name}
             onChangeText={(v) => s.set('name', v)}
+            error={submitted && !s.name.trim() ? 'Required' : undefined}
           />
         </View>
 
@@ -45,20 +55,20 @@ export default function VendorDetailsStep() {
           {loading ? (
             <ActivityIndicator color="#cba72f" />
           ) : (
-            <TypeFields fields={fields} />
+            <TypeFields fields={fields} submitted={submitted} />
           )}
         </View>
 
         <View className="mt-4 flex-row gap-3">
           <Button label="Previous" variant="secondary" fullWidth={false} className="flex-1" onPress={() => router.back()} />
-          <Button label="Next" fullWidth={false} className="flex-1" disabled={!valid} onPress={() => router.push('/(auth)/vendor-onboard/step-3-documents')} />
+          <Button label="Next" fullWidth={false} className="flex-1" onPress={handleNext} />
         </View>
       </View>
     </Screen>
   );
 }
 
-function TypeFields({ fields }: { fields: VendorAttributeField[] }) {
+function TypeFields({ fields, submitted }: { fields: VendorAttributeField[]; submitted: boolean }) {
   const s = useOnboardingStore();
 
   if (!fields.length) return null;
@@ -66,24 +76,26 @@ function TypeFields({ fields }: { fields: VendorAttributeField[] }) {
   return (
     <View className="gap-4">
       {fields.map((field) => {
-        const value = (s as any)[field.key];
+        const value = s.attributes[field.key];
         if (field.type === 'BOOLEAN') {
           return (
             <Toggle
               key={field.key}
               label={field.label}
               value={Boolean(value)}
-              onChange={(v) => s.set(field.key as any, v)}
+              onChange={(v) => s.setAttribute(field.key, v)}
             />
           );
         }
+        const isEmpty = !String(value ?? '').trim();
         return (
           <Input
             key={field.key}
-            label={field.label}
+            label={field.required ? `${field.label} *` : field.label}
             value={String(value ?? '')}
             keyboardType={field.type === 'INTEGER' ? 'number-pad' : 'default'}
-            onChangeText={(v) => s.set(field.key as any, v)}
+            onChangeText={(v) => s.setAttribute(field.key, v)}
+            error={submitted && field.required && isEmpty ? 'Required' : undefined}
           />
         );
       })}

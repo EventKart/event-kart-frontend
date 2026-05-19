@@ -32,7 +32,7 @@ const TYPE_ICON_MAP: Record<VendorType, { label: string; Icon: LucideIcon }> = {
 export default function VendorTypeStep() {
   const router = useRouter();
   const type = useOnboardingStore((s) => s.type);
-  const setField = useOnboardingStore((s) => s.set);
+  const setType = useOnboardingStore((s) => s.setType);
   const { types, loading } = useVendorTypes();
 
   return (
@@ -57,7 +57,7 @@ export default function VendorTypeStep() {
               return (
                 <View key={t} className="w-1/2 px-2 mb-4">
                   <Pressable
-                    onPress={() => setField('type', t)}
+                    onPress={() => setType(t)}
                     className={`h-32 rounded-xl items-center justify-center border-2 ${
                       selected
                         ? 'bg-primary-container border-primary-container'

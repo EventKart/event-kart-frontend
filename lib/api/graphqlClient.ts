@@ -28,7 +28,7 @@ class GraphQLClient {
     };
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    if (__DEV__) console.log(`[gql] → ${this.url}`, token ? 'with auth' : 'no auth', { variables });
+    if (__DEV__) console.log(`[gql] → ${this.url}`, token ? 'with auth' : 'no auth', JSON.stringify(variables, null, 2));
 
     let response: Response;
     try {

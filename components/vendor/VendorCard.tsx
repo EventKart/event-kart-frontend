@@ -99,7 +99,7 @@ export function VendorCard({ vendor, onPress, variant = 'list' }: VendorCardProp
           <View className="flex-row items-center gap-1.5">
             <MapPin size={14} color="#76777d" />
             <Text className="font-sans text-body-sm text-surface-on-variant">
-              {vendor.address ?? 'Bengaluru, India'}
+              {(vendor.attributes?.['address'] as string | undefined) ?? 'Bengaluru, India'}
             </Text>
           </View>
           <View
@@ -126,23 +126,32 @@ export function VendorCard({ vendor, onPress, variant = 'list' }: VendorCardProp
 }
 
 function subtitleFor(v: Vendor): string {
+  const a = v.attributes ?? {};
   switch (v.type) {
-    case 'VENUE':
-      return v.capacity ? `Hosts up to ${v.capacity} guests` : 'Premium event venue';
-    case 'CATERER':
-      return v.cuisines?.slice(0, 3).join(' · ') ?? 'Multi-cuisine catering';
-    case 'DECORATOR':
-      return v.themes?.slice(0, 3).join(' · ') ?? 'Elegant event décor';
+    case 'VENUE': {
+      const capacity = a['capacity'] as number | undefined;
+      return capacity ? `Hosts up to ${capacity} guests` : 'Premium event venue';
+    }
+    case 'CATERER': {
+      const cuisines = a['cuisines'] as string[] | undefined;
+      return cuisines?.slice(0, 3).join(' · ') ?? 'Multi-cuisine catering';
+    }
+    case 'DECORATOR': {
+      const themes = a['themes'] as string[] | undefined;
+      return themes?.slice(0, 3).join(' · ') ?? 'Elegant event décor';
+    }
     case 'PHOTOGRAPHER':
-      return [v.providesDroneShoot && 'Drone shoot', v.providesVideography && 'Videography']
+      return [a['providesDroneShoot'] && 'Drone shoot', a['providesVideography'] && 'Videography']
         .filter(Boolean)
         .join(' · ') || 'Wedding & event photography';
-    case 'PRIEST':
-      return v.languages?.slice(0, 3).join(' · ') ?? 'Vedic & traditional ceremonies';
-    case 'BAND':
-      return v.numberOfMembers
-        ? `${v.numberOfMembers}-piece live ensemble`
-        : 'Live music & entertainment';
+    case 'PRIEST': {
+      const languages = a['languages'] as string[] | undefined;
+      return languages?.slice(0, 3).join(' · ') ?? 'Vedic & traditional ceremonies';
+    }
+    case 'BAND': {
+      const numberOfMembers = a['numberOfMembers'] as number | undefined;
+      return numberOfMembers ? `${numberOfMembers}-piece live ensemble` : 'Live music & entertainment';
+    }
     default:
       return '';
   }

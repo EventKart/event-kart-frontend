@@ -77,7 +77,7 @@ export default function VendorDetailScreen() {
               <View className="flex-row items-center gap-1">
                 <MapPin size={14} color="#76777d" />
                 <Text className="font-sans text-body-sm text-surface-on-variant">
-                  {vendor.address ?? 'Bengaluru, India'}
+                  {(vendor.attributes?.['address'] as string | undefined) ?? 'Bengaluru, India'}
                 </Text>
               </View>
             </View>
@@ -199,32 +199,46 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 function detailRowsFor(v: ReturnType<typeof useVendor>['vendor']) {
   if (!v) return [];
   const rows: Array<{ label: string; value: string }> = [];
+  const a = v.attributes ?? {};
   switch (v.type) {
-    case 'VENUE':
-      if (v.capacity) rows.push({ label: 'Capacity', value: `${v.capacity} guests` });
-      if (v.address) rows.push({ label: 'Address', value: v.address });
-      rows.push({ label: 'Parking', value: v.hasParking ? 'Available' : 'Not available' });
+    case 'VENUE': {
+      const capacity = a['capacity'] as number | undefined;
+      const address = a['address'] as string | undefined;
+      if (capacity) rows.push({ label: 'Capacity', value: `${capacity} guests` });
+      if (address) rows.push({ label: 'Address', value: address });
+      rows.push({ label: 'Parking', value: a['hasParking'] ? 'Available' : 'Not available' });
       break;
-    case 'CATERER':
-      if (v.cuisines?.length) rows.push({ label: 'Cuisines', value: v.cuisines.join(', ') });
-      rows.push({ label: 'Cutlery included', value: v.providesCutlery ? 'Yes' : 'No' });
+    }
+    case 'CATERER': {
+      const cuisines = a['cuisines'] as string[] | undefined;
+      if (cuisines?.length) rows.push({ label: 'Cuisines', value: cuisines.join(', ') });
+      rows.push({ label: 'Cutlery included', value: a['providesCutlery'] ? 'Yes' : 'No' });
       break;
-    case 'DECORATOR':
-      if (v.themes?.length) rows.push({ label: 'Themes', value: v.themes.join(', ') });
-      rows.push({ label: 'Lighting', value: v.providesLighting ? 'Provided' : 'Not provided' });
+    }
+    case 'DECORATOR': {
+      const themes = a['themes'] as string[] | undefined;
+      if (themes?.length) rows.push({ label: 'Themes', value: themes.join(', ') });
+      rows.push({ label: 'Lighting', value: a['providesLighting'] ? 'Provided' : 'Not provided' });
       break;
-    case 'PRIEST':
-      if (v.languages?.length) rows.push({ label: 'Languages', value: v.languages.join(', ') });
-      if (v.religion) rows.push({ label: 'Religion', value: v.religion });
+    }
+    case 'PRIEST': {
+      const languages = a['languages'] as string[] | undefined;
+      const religion = a['religion'] as string | undefined;
+      if (languages?.length) rows.push({ label: 'Languages', value: languages.join(', ') });
+      if (religion) rows.push({ label: 'Religion', value: religion });
       break;
+    }
     case 'PHOTOGRAPHER':
-      rows.push({ label: 'Drone shoot', value: v.providesDroneShoot ? 'Yes' : 'No' });
-      rows.push({ label: 'Videography', value: v.providesVideography ? 'Yes' : 'No' });
+      rows.push({ label: 'Drone shoot', value: a['providesDroneShoot'] ? 'Yes' : 'No' });
+      rows.push({ label: 'Videography', value: a['providesVideography'] ? 'Yes' : 'No' });
       break;
-    case 'BAND':
-      if (v.numberOfMembers) rows.push({ label: 'Members', value: `${v.numberOfMembers}` });
-      if (v.instruments?.length) rows.push({ label: 'Instruments', value: v.instruments.join(', ') });
+    case 'BAND': {
+      const numberOfMembers = a['numberOfMembers'] as number | undefined;
+      const instruments = a['instruments'] as string[] | undefined;
+      if (numberOfMembers) rows.push({ label: 'Members', value: `${numberOfMembers}` });
+      if (instruments?.length) rows.push({ label: 'Instruments', value: instruments.join(', ') });
       break;
+    }
   }
   return rows;
 }

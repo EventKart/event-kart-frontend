@@ -20,12 +20,7 @@ const VENDOR_FRAGMENT = gql`
     contactNumber
     email
     documents { aadhar }
-    ... on Venue { address capacity hasParking }
-    ... on Caterer { cuisines providesCutlery }
-    ... on Decorator { themes providesLighting }
-    ... on Priest { languages religion }
-    ... on Photographer { providesDroneShoot providesVideography }
-    ... on Band { instruments numberOfMembers }
+    attributes
   }
 `;
 
